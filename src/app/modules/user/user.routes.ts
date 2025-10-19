@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { UserServices } from "./user.services";
 import { createUserZodSchema } from "./user.validation";
 import { userController } from "./user.controller";
 import { validateRequest } from "../../middlewares/validateRequest";
+import { Role } from "./user.interface";
+import { checkAuth } from "../../middlewares/checkAuth";
 
 
 
@@ -12,8 +13,7 @@ router.post(
   validateRequest(createUserZodSchema),
   userController.createUser
 );
-
-router.get("/me", UserServices.getMe);
+router.get("/me", checkAuth(...Object.values(Role)), userController.getMe);
 
 
 export const UserRoutes = router;

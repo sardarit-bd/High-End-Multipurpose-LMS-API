@@ -37,7 +37,13 @@ const createUser = async (payload: Partial<IUser>) => {
     return userObj;
 };
 const getMe = async (userId: string) => {
-    return "sohel"
+  const user = await User.findById(userId).select("-password");
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
+  return user;
 };
 
 

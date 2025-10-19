@@ -24,7 +24,7 @@ const getMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const verifiedToken = req.user as JwtPayload;
 
-        const user = await UserServices.getMe(verifiedToken.userId);
+         const user = (await UserServices.getMe(verifiedToken.userId)) as IUser;
 
         sendResponse(res, {
             statusCode: httpStatus.CREATED,

@@ -10,6 +10,7 @@ import { IsActive, Role } from "../modules/user/user.interface";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcryptjs from "bcryptjs";
 
+// local login
 passport.use(
   new LocalStrategy(
     {
@@ -68,6 +69,7 @@ passport.use(
   )
 );
 
+// google login
 passport.use(
   new GoogleStrategy(
     {
@@ -124,6 +126,7 @@ passport.use(
     }
   )
 );
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
