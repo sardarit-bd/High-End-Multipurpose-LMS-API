@@ -90,8 +90,31 @@ const forgotPassword = async (email: string) => {
     },
   });
 };
+const resetPassword = async (
+  decodedToken: JwtPayload,
+  userId: string,
+  plainPassword: string
+) => {
+  if(decodedToken.userId !== userId){
+    throw new AppError(httpStatus.BAD_REQUEST, "You can not reset this password")
+  }
+  const user = await User.findById(decodedToken.userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User is not found.");
+  }
+
+
+  user!.password = await bcryptjs.hash(
+    plainPassword,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
+  user!.save();
+
+  return true;
+};
 export const AuthServices = {
     credentialsLogin,
     changePassword,
-    forgotPassword
+    forgotPassword,
+    resetPassword
 }
