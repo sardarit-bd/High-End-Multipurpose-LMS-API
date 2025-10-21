@@ -19,6 +19,8 @@ export interface ICourse {
   status: CourseStatus;
   isDeleted?: boolean;
 
+  awardOnComplete?: Types.ObjectId;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -4,15 +4,14 @@ import AppError from "../../errorHelpers/AppError";
 import { ILesson } from "./lesson.interface";
 import { Unit } from "../unit/unit.model";
 import { Course } from "../course/course.model";
-import { Lesson } from "./lesson.model";
+import { CompletedLesson, Lesson } from "./lesson.model";
 
 const createLesson = async (
   payload: ILesson,
   actor: { userId: string; role: string }
 ) => {
   // Verify unit and course
-  const {unit : unitId} = payload;
-  console.log("unitId:", unitId);
+  const { unit: unitId } = payload;
   const unit = await Unit.findById(unitId);
   if (!unit || unit.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Unit Not Found");
 
@@ -44,4 +43,20 @@ const listLessons = async (unitId: string) => {
   return Lesson.find({ unit: unitId, isDeleted: false }).sort({ orderIndex: 1, createdAt: 1 });
 };
 
-export const LessonServices = { createLesson, listLessons };
+const resolveCourseFromLesson = async (lessonId: string) => {
+  const lesson = await Lesson.findById(lessonId).populate("unit"); // unit.course in your schema
+  if (!lesson) throw new AppError(httpStatus.NOT_FOUND, "Lesson Not Found");
+  const courseId = (lesson as any).course || (lesson.unit as any)?.course; // depending on your denormalization
+  if (!courseId) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Lesson missing course reference");
+  return { courseId: String(courseId) };
+}
+
+const markCompleted = async (userId: string, courseId: string, lessonId: string) => {
+  // idempotent unique (user, lesson)
+  await CompletedLesson.updateOne(
+    { user: userId, lesson: lessonId },
+    { $setOnInsert: { course: courseId, completedAt: new Date() } },
+    { upsert: true }
+  );
+}
+export const LessonServices = { createLesson, listLessons, resolveCourseFromLesson, markCompleted };

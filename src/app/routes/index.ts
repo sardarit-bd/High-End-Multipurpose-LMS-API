@@ -5,6 +5,9 @@ import { OtpRoutes } from "../modules/otp/otp.routes";
 import { CourseRoutes } from "../modules/course/course.routes";
 import { UnitRoutes } from "../modules/unit/unit.routes";
 import { LessonRoutes } from "../modules/lesson/lesson.routes";
+import { TaskRoutes } from "../modules/task/task.routes";
+import { SubmissionRoutes } from "../modules/submission/submission.routes";
+import { QuizRoutes } from "../modules/quiz/quize.routes";
 
 
 export const router = Router()
@@ -33,6 +36,18 @@ const moduleRoutes = [
     {
         path: '/lessons',
         route: LessonRoutes
+    },
+    {
+        path: '/tasks',
+        route: TaskRoutes
+    },
+    {
+        path: '/submissions',
+        route: SubmissionRoutes
+    },
+    {
+        path: '/quizzes',
+        route: QuizRoutes
     }
 ]
 

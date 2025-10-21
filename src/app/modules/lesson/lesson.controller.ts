@@ -34,4 +34,20 @@ const listLessons = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const lessonController = { createLesson, listLessons };
+const completeLesson = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  const { lessonId } = req.params;
+  const { courseId } = await LessonServices.resolveCourseFromLesson(lessonId);
+
+  await LessonServices.markCompleted(token.userId, courseId, lessonId);
+
+  // NOTE: Points for quiz correctness & attendance will be added in their own endpoints.
+  // We keep lesson completion lean here (no auto points).
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Lesson marked as completed",
+    data: { courseId, lessonId }
+  });
+})
+export const lessonController = { createLesson, listLessons, completeLesson };

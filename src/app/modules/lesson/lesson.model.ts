@@ -14,7 +14,7 @@ const LessonSchema = new Schema<ILesson>(
             required: true,
         },
         contentUrl: { type: String, required: true },
-
+        durationSec: { type: Number },
         orderIndex: { type: Number, required: true, default: 1 },
         isDeleted: { type: Boolean, default: false },
     },
@@ -24,3 +24,14 @@ const LessonSchema = new Schema<ILesson>(
 LessonSchema.index({ unit: 1, orderIndex: 1 });
 
 export const Lesson = models.Lesson || model<ILesson>("Lesson", LessonSchema);
+
+const CompletedLessonSchema = new Schema({
+  user:   { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  lesson: { type: Schema.Types.ObjectId, ref: "Lesson", required: true, index: true },
+  course: { type: Schema.Types.ObjectId, ref: "Course", required: true, index: true },
+  completedAt: { type: Date, default: Date.now }
+}, { versionKey: false });
+
+CompletedLessonSchema.index({ user: 1, lesson: 1 }, { unique: true });
+
+export const CompletedLesson = models.CompletedLesson || model("CompletedLesson", CompletedLessonSchema);

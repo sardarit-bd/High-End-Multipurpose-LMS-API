@@ -1,6 +1,5 @@
 import { Schema, model, models } from "mongoose";
 import { ICourse } from "./course.interface";
-
 const CourseSchema = new Schema<ICourse>(
   {
     title: { type: String, required: true, trim: true },
@@ -17,6 +16,7 @@ const CourseSchema = new Schema<ICourse>(
 
     status: { type: String, enum: ["draft", "published"], default: "draft" },
     isDeleted: { type: Boolean, default: false },
+    awardOnComplete: { type: Schema.Types.ObjectId, ref: "Badge" }
   },
   { timestamps: true, versionKey: false }
 );

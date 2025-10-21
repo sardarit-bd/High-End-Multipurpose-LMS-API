@@ -8,7 +8,9 @@ export interface ILesson {
 //   course: Types.ObjectId;               
   title:string;        
   contentType: LessonContentType;
-  contentUrl: string;                   
+  contentUrl: string;  
+  durationSec?: number;
+                   
   orderIndex: number;                   
   isDeleted?: boolean;
   createdAt?: Date;

@@ -21,4 +21,10 @@ router.get(
   lessonController.listLessons
 );
 
+router.post(
+  "/:lessonId/complete",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
+  lessonController.completeLesson
+);
+
 export const LessonRoutes = router;

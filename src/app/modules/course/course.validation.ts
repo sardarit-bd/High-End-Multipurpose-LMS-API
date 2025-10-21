@@ -1,5 +1,8 @@
 import z from "zod";
-
+const scoringZ = z.object({
+  quizCorrectPoint: z.number().int().min(0).default(5),
+  attendancePoint: z.number().int().min(0).default(10),
+});
 export const createCourseZodSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
   description: z.string().optional(),
@@ -10,6 +13,8 @@ export const createCourseZodSchema = z.object({
   thumbnail: z.string().url().optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "published"]).optional(),
+  scoring: scoringZ.optional(),
+  awardOnComplete: z.string().optional()
 });
 
 export const updateCourseZodSchema = z.object({
@@ -22,6 +27,8 @@ export const updateCourseZodSchema = z.object({
   thumbnail: z.string().url().optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "published"]).optional(),
+  scoring: scoringZ.optional(),
+  awardOnComplete: z.string().optional()
 });
 
 export const listCourseQueryZodSchema = z.object({
