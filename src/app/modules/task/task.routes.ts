@@ -10,7 +10,7 @@ const router = Router();
 
 /** POST /units/:unitId/tasks (INSTRUCTOR | ADMIN) */
 router.post(
-  "/:unitId/create",
+  "/create",
   checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),        // auth required
 //   validateRequest(createTaskSchema),
   taskController.createTask

@@ -17,7 +17,7 @@ router.post(
 
 /** INSTRUCTOR/ADMIN grades a submission */
 router.patch(
-  "/:submissionId/task/:taskId/grade",
+  "/task/grade",
   checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
 //   validateRequest(gradeSubmissionZod),
   submissionController.gradeSubmission

@@ -7,7 +7,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { TaskServices } from "./task.services";
 
 const createTask = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
-  const { unitId } = req.params;
+  const { unitId } = req.body;
   const token = req.user as JwtPayload;
   const created = await TaskServices.create(unitId, req.body, { userId: token.userId, role: token.role });
 

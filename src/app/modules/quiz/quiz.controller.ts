@@ -7,7 +7,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { QuizServices } from "./quiz.services";
 
 const createQuiz = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
-  const { unitId } = req.params;
+  const { unitId } = req.body;
   const token = req.user as JwtPayload;
 
   const created = await QuizServices.createQuiz(unitId, req.body, {
@@ -42,7 +42,7 @@ const listQuizzes = catchAsync(async (req: Request, res: Response) => {
  */
 const submitQuiz = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const { quizId } = req.params;
+  const { quizId } = req.body;
 
   const result = await QuizServices.submitQuiz(quizId, token.userId, req.body.answers);
 

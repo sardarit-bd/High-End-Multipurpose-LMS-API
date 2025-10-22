@@ -8,7 +8,7 @@ const router = Router();
 
 /** Create quiz under a unit (also creates Task(type="quiz")) */
 router.post(
-  "/:unitId/create",
+  "/create",
   checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),        // auth required
   quizController.createQuiz
 );
@@ -21,7 +21,7 @@ router.get(
 
 /** Student submits a quiz → auto-scored → points recorded via TaskSubmission */
 router.post(
-  "/:quizId/submit",
+  "/submit",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
 
   quizController.submitQuiz

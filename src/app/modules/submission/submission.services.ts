@@ -46,7 +46,7 @@ const gradeSubmission = async (
 ) => {
   const task = await Task.findById(taskId);
   if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
-
+  console.log("Task fetched for grading:", task);
   const course = await Course.findById(task.course);
   if (!course) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
 
@@ -54,7 +54,7 @@ const gradeSubmission = async (
   const isAdmin = actor.role === "ADMIN";
   if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
 
-  const sub = await TaskSubmission.findOne({ _id: submissionId, task: taskId });
+  const sub = await TaskSubmission.findOne({ _id: submissionId });
   if (!sub) throw new AppError(httpStatus.NOT_FOUND, "Submission Not Found");
 
   // If this is a quiz submission, we need the quiz to verify per-question maxPoints for short items

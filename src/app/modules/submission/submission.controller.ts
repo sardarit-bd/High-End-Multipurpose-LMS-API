@@ -22,7 +22,7 @@ const createReviewedSubmission = catchAsync(async (req: Request, res: Response) 
 
 const gradeSubmission = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const { taskId, submissionId } = req.params;
+  const { taskId, submissionId } = req.body;
 
   const updated = await SubmissionServices.gradeSubmission(
     taskId,
