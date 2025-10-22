@@ -60,10 +60,11 @@ export const sendEmail = async ({
       })),
     });
 
+    console.log("email info:", info);
     console.log(`✉️ Email sent to ${to}: ${info.messageId}`);
     return info;
   } catch (error: any) {
-    console.error("email sending error:", error);
+    console.error("email sending error:", error.message);
     throw new AppError(500, error?.message || "Email error");
   }
 };
