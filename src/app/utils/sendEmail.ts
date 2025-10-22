@@ -1,19 +1,12 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { envVars } from "../config/env";
 import ejs from "ejs";
 import path from "path";
 import fs from "fs";
 import AppError from "../errorHelpers/AppError";
 
-const transporter = nodemailer.createTransport({
-  port: Number(envVars.EMAIL_SENDER.SMTP_PORT), // 587 for STARTTLS, 465 for SSL
-  host: envVars.EMAIL_SENDER.SMTP_HOST,
-  secure: true, 
-  auth: {
-    user: envVars.EMAIL_SENDER.SMTP_USER,
-    pass: envVars.EMAIL_SENDER.SMTP_PASS,
-  }
-});
+// initialize Resend client
+const resend = new Resend(envVars.EMAIL_SENDER.SMTP_HOST);
 
 function resolveTemplatePath(name: string) {
   const prodPath = path.join(__dirname, "template", `${name}.ejs`);
@@ -46,25 +39,26 @@ export const sendEmail = async ({
       throw new Error(`Template not found at ${templatePath}`);
     }
 
+    // Render EJS template
     const html = await ejs.renderFile(templatePath, templateData);
 
-    const info = await transporter.sendMail({
-      from: envVars.EMAIL_SENDER.SMTP_FROM,
+    // Send email via Resend API
+    const response = await resend.emails.send({
+      from: envVars.EMAIL_SENDER?.SMTP_FROM || "LMS <no-reply@yourdomain.com>",
       to,
       subject,
       html,
       attachments: attachments?.map(a => ({
         filename: a.filename,
-        content: a.content,
-        contentType: a.contentType,
+        content: a.content.toString(),
+        type: a.contentType,
       })),
     });
 
-    console.log("email info:", info);
-    console.log(`✉️ Email sent to ${to}: ${info.messageId}`);
-    return info;
+    console.log(`✅ Email sent to ${to}`, response);
+    return response;
   } catch (error: any) {
-    console.error("email sending error:", error.message);
+    console.error("email sending error:", error);
     throw new AppError(500, error?.message || "Email error");
   }
 };
