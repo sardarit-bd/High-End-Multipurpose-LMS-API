@@ -8,14 +8,11 @@ import AppError from "../errorHelpers/AppError";
 const transporter = nodemailer.createTransport({
   port: Number(envVars.EMAIL_SENDER.SMTP_PORT), // 587 for STARTTLS, 465 for SSL
   host: envVars.EMAIL_SENDER.SMTP_HOST,
-  secure: Number(envVars.EMAIL_SENDER.SMTP_PORT) === 465, // true for 465, false for 587
-  requireTLS: true,  
+  secure: Number(envVars.EMAIL_SENDER.SMTP_PORT) === 465, // true for 465, false for 587  
   auth: {
     user: envVars.EMAIL_SENDER.SMTP_USER,
     pass: envVars.EMAIL_SENDER.SMTP_PASS,
-  },
-  logger: true,                       // TEMP: to see SMTP dialog in Render logs
-  debug: true                       // TEMP: to see SMTP dialog in Render logs
+  }
 });
 
 function resolveTemplatePath(name: string) {
