@@ -1,0 +1,40 @@
+name: CI & Deploy (Render)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # Optional: add tests here
+      # - name: Test
+      #   run: npm test
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: curl -sSf -X POST "$https://api.render.com/deploy/srv-d3s56rfdiees7385mc1g?key=Cg6ZjuEAP68"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.https://api.render.com/deploy/srv-d3s56rfdiees7385mc1g?key=Cg6ZjuEAP68 }}
