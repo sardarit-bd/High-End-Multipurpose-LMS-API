@@ -20,7 +20,6 @@ const stripe = new Stripe(envVars.PAYMENT.STRIPE_SECRET_KEY, {
 export const stripeWebhook = catchAsync(async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
   let event: Stripe.Event;
-console.log(req.body);
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -42,7 +41,7 @@ console.log(req.body);
       currency: (session.currency || "USD").toUpperCase(),
       orderId: (session.metadata?.orderId ?? "") as string,
       userId: (session.metadata?.userId ?? "") as string,
-      courseId: (session.metadata?.courseId ?? "") as string,
+      courseId: (session.metadata?.courseId ?? session.metadata?.packageId ?? "") as string,
     };
 
     const order = await PaymentService.markPaidFromWebhook("stripe", normalized);
@@ -55,8 +54,8 @@ console.log(req.body);
     });
   }
 
-  // অন্য ইভেন্ট থাকলে (refund, failed, ইত্যাদি) চাইলে পরে হ্যান্ডেল করুন
-  console.log(`ℹ️ Unhandled Stripe event: ${event.type}`);
+  
+  console.log(`Unhandled Stripe event: ${event.type}`);
    return sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Unhandled event type", data: null });
 });
 

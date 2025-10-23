@@ -8,7 +8,6 @@ const CourseSchema = new Schema<ICourse>(
     price: { type: Number, default: 0 },
     level: { type: String, enum: ["beginner", "intermediate", "advanced"], default: "beginner" },
     category: { type: String, index: true },
-    language: { type: String, default: "en" },
     thumbnail: { type: String },
     tags: [{ type: String }],
 

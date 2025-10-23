@@ -12,6 +12,7 @@ import { path } from "pdfkit";
 import { EnrollmentRoutes } from "../modules/enrollment/enrollment.routes";
 import { OrderRoutes } from "../modules/order/order.routes";
 import { PaymentRoutes } from "../modules/payment/payment.routes";
+import { PackageRoutes } from "../modules/Package/package.routes";
 
 
 export const router = Router()
@@ -64,6 +65,10 @@ const moduleRoutes = [
     {     
         path: '/payment',
         route: PaymentRoutes   
+    },
+    {
+        path: '/packages',
+        route: PackageRoutes
     }
 ]
 

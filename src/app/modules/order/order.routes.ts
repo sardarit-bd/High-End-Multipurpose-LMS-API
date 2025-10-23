@@ -16,9 +16,20 @@ router.post(
 router.get("/me", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), orderController.getMyOrders);
 
 router.get(
+  "/",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.getOrders
+);
+router.get(
   "/:orderId",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
-  orderController.getOrder
+  orderController.getOrderById
+);
+
+router.get(
+  "/session/:sessionId",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.getOrderBySession
 );
 
 export const OrderRoutes = router;

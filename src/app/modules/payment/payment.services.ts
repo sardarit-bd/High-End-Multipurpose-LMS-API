@@ -9,19 +9,19 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 
 const providers = {
-  stripe: new StripeProvider(),
-  paypal: new PaypalProvider(),
-  toyyibpay: new ToyyibPayProvider()
+    stripe: new StripeProvider(),
+    paypal: new PaypalProvider(),
+    toyyibpay: new ToyyibPayProvider()
 } as const;
 
-const  createCheckoutSession = async (input: CreateSessionInput) => {
+const createCheckoutSession = async (input: CreateSessionInput) => {
     const p = providers[input.provider];
     if (!p) throw new AppError(httpStatus.BAD_REQUEST, "Unsupported provider");
     return p.createCheckoutSession(input);
-  }
+}
 
-  // Webhook handlers (normalized)
-  const markPaidFromWebhook = async (provider: "stripe"|"paypal"|"toyyibpay", normalized: {
+// Webhook handlers (normalized)
+const markPaidFromWebhook = async (provider: "stripe" | "paypal" | "toyyibpay", normalized: {
     providerPaymentId: string;
     providerSessionId?: string;
     amount: number;
@@ -29,14 +29,15 @@ const  createCheckoutSession = async (input: CreateSessionInput) => {
     orderId: string;
     userId: string;
     courseId: string;
-  }) => {
+}) => {
     // idempotent: providerPaymentId must be unique
     const order = await Order.findById(normalized.orderId);
     if (!order) throw new AppError(httpStatus.NOT_FOUND, "Order Not Found");
 
     // prevent cross-user/course
-    if (String(order.user) !== normalized.userId || String(order.course) !== normalized.courseId) {
-      throw new AppError(httpStatus.BAD_REQUEST, "Order mismatch");
+    // || String(order.course) !== normalized.courseId inside course check removed to allow package orders
+    if (String(order.user) !== normalized.userId) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Order mismatch");
     }
 
     order.providerPaymentId = normalized.providerPaymentId;
@@ -45,11 +46,18 @@ const  createCheckoutSession = async (input: CreateSessionInput) => {
     await order.save();
 
     // Enroll the learner
-    await EnrollmentServices.enrollSelf(normalized.courseId, normalized.userId);
-
+    // await EnrollmentServices.enrollSelf(normalized.courseId, normalized.userId);
+    if (order.itemType === "course") {
+        await EnrollmentServices.enrollSelf(String(order.course?.id || order.course), normalized.userId);
+    } else if (order.itemType === "package") {
+        const list = order.courseIds || [];
+        for (const courseId of list) {
+            await EnrollmentServices.enrollSelf(courseId, normalized.userId);
+        }
+    }
     return order;
-  }
+}
 export const PaymentService = {
-  createCheckoutSession,
-  markPaidFromWebhook
+    createCheckoutSession,
+    markPaidFromWebhook
 };

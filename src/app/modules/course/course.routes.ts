@@ -23,12 +23,11 @@ router.post(
 /** GET /courses — public */
 router.get(
   "/",
-  checkEnrollment,
   courseController.listCourses
 );
 
 /** GET /courses/:id — public */
-router.get("/:id", courseController.getCourse);
+router.get("/:id", checkAuth(Role.SUPER_ADMIN), courseController.getCourse);
 
 /** PATCH /courses/:id — INSTRUCTOR | ADMIN + ownership check in service */
 router.patch(
