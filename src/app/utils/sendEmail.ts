@@ -44,7 +44,7 @@ export const sendEmail = async ({
 
     // Send email via Resend API
     const response = await resend.emails.send({
-      from: envVars.EMAIL_SENDER?.SMTP_FROM || "LMS <no-reply@yourdomain.com>",
+      from: envVars.EMAIL_SENDER?.SMTP_FROM || "LMS <sardarit.bd.official@gmail.com>",
       to,
       subject,
       html,

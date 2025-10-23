@@ -8,9 +8,10 @@ import { globalErrorHandle } from "./app/middlewares/globalErrorHandler";
 import { notFound } from "./app/middlewares/notFound";
 import { router } from "./app/routes";
 import "./app/config/passport";
+import { stripeWebhook } from "./app/modules/payment/payment.webhooks.controller";
 
 const app = express();
-
+app.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhook);
 app.use(
   expressSession({
     secret: envVars.EXPRESS_SESSION_SECRET,
@@ -30,6 +31,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 app.use("/api", router);
 

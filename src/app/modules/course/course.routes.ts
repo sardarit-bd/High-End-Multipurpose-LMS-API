@@ -8,6 +8,7 @@ import {
   updateCourseZodSchema,
   listCourseQueryZodSchema,
 } from "./course.validation";
+import { checkEnrollment } from "../../middlewares/checkEnrollment";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.post(
 /** GET /courses — public */
 router.get(
   "/",
+  checkEnrollment,
   courseController.listCourses
 );
 

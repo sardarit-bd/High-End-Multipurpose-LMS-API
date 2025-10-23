@@ -8,6 +8,10 @@ import { LessonRoutes } from "../modules/lesson/lesson.routes";
 import { TaskRoutes } from "../modules/task/task.routes";
 import { SubmissionRoutes } from "../modules/submission/submission.routes";
 import { QuizRoutes } from "../modules/quiz/quize.routes";
+import { path } from "pdfkit";
+import { EnrollmentRoutes } from "../modules/enrollment/enrollment.routes";
+import { OrderRoutes } from "../modules/order/order.routes";
+import { PaymentRoutes } from "../modules/payment/payment.routes";
 
 
 export const router = Router()
@@ -48,6 +52,18 @@ const moduleRoutes = [
     {
         path: '/quizzes',
         route: QuizRoutes
+    },
+    {
+        path: '/enrollments',
+        route: EnrollmentRoutes
+    },
+    {
+        path: '/orders',
+        route: OrderRoutes
+    },
+    {     
+        path: '/payment',
+        route: PaymentRoutes   
     }
 ]
 
