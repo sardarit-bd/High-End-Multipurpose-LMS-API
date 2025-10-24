@@ -18,6 +18,15 @@ export enum IsActive {
     INACTIVE = 'INACTIVE',
     BLOCKED = 'BLOCKED'
 }
+export type InstructorRequestStatus = "none" | "pending" | "approved" | "rejected";
+
+export interface IInstructorRequest {
+  status: InstructorRequestStatus;
+  note?: string;
+  requestedAt?: Date;
+  reviewedAt?: Date;
+  reviewedBy?: Types.ObjectId;
+}
 export interface IUser {
     _id?: Types.ObjectId,
     name: string,
@@ -31,5 +40,6 @@ export interface IUser {
     isVerified ?: boolean,
     role: Role,
     auths: IAuthProvider[],
-    createdAt?: Date
+    createdAt?: Date,
+    instructorRequest?: IInstructorRequest;
 }

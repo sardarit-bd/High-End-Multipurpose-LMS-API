@@ -36,7 +36,7 @@ const listLessons = catchAsync(async (req: Request, res: Response) => {
 
 const completeLesson = catchAsync(async (req, res) => {
   const token = req.user as JwtPayload;
-  const { lessonId } = req.params;
+  const { lessonId } = req.body;
   const { courseId } = await LessonServices.resolveCourseFromLesson(lessonId);
 
   await LessonServices.markCompleted(token.userId, courseId, lessonId);

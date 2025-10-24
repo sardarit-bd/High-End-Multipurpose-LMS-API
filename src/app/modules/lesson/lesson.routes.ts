@@ -22,7 +22,7 @@ router.get(
 );
 
 router.post(
-  "/:lessonId/complete",
+  "/complete",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
   lessonController.completeLesson
 );

@@ -13,14 +13,14 @@ export class StripeProvider implements IPaymentProvider {
   }
 
   async createCheckoutSession(input: CreateSessionInput): Promise<CreateSessionResult> {
-    const session = await this.stripe.checkout.sessions.create({
+    const params: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ["card"],
       mode: "payment",
       line_items: [
         {
           price_data: {
-            currency: input.currency.toLowerCase(),
-            unit_amount: input.amount, // 1999 = $19.99
+            currency: (input.currency ?? "usd").toLowerCase(),
+            unit_amount: input.amount ?? 0, // 1999 = $19.99
             product_data: {
               name: `Course Enrollment #${input.courseId}`,
               description: "Enroll in SDG Learning Course",
@@ -32,12 +32,14 @@ export class StripeProvider implements IPaymentProvider {
       success_url: `${envVars.PAYMENT.STRIPE_SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: envVars.PAYMENT.STRIPE_CANCEL_URL,
       metadata: {
-        orderId: input.orderId,
-        userId: input.userId,
-        courseId: input.courseId,
+        orderId: input.orderId ?? null,
+        userId: input.userId ?? null,
+        courseId: input.courseId ?? null,
       },
-    });
+    };
 
-    return { sessionId: session.id, checkoutUrl: session.url || null };
+    const session = await this.stripe.checkout.sessions.create(params);
+
+    return { sessionId: session.id, checkoutUrl: session.url ?? null };
   }
 }

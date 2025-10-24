@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
+import { IAuthProvider, IInstructorRequest, IsActive, IUser, Role } from "./user.interface";
 
 const authProviderSchema = new Schema<IAuthProvider>({
     provider: {
@@ -15,6 +15,13 @@ const authProviderSchema = new Schema<IAuthProvider>({
     _id: false
 })
 
+const instructorRequestSchema = new Schema<IInstructorRequest>({
+    status: { type: String, enum: ["none", "pending", "approved", "rejected"], default: "none" },
+    note: { type: String },
+    requestedAt: { type: Date },
+    reviewedAt: { type: Date },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+}, { _id: false, versionKey: false });
 
 const userSchema = new Schema<IUser>({
     name: {
@@ -56,7 +63,8 @@ const userSchema = new Schema<IUser>({
         type: Boolean,
         default: false
     },
-    auths: [authProviderSchema]
+    auths: [authProviderSchema],
+    instructorRequest: { type: instructorRequestSchema, default: { status: "none" } },
 }, {
     timestamps: true,
     versionKey: false

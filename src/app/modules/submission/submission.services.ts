@@ -5,6 +5,7 @@ import { TaskSubmission } from "./submission.model";
 import { Task } from "../task/task.model";
 import { Course } from "../course/course.model";
 import { Quiz } from "../quiz/quiz.model";
+import { GamificationServices } from "../gamification/gamification.service";
 
 type GradeScoreItem = { qIndex: number; reviewPoints: number };
 type GradeBody = { scores: GradeScoreItem[]; status: "approved" | "rejected" };
@@ -116,6 +117,18 @@ const gradeSubmission = async (
   sub.pointsAwarded = total;
   sub.status = "approved";
   await sub.save();
+
+    // Award task review points
+  if (body.status === "approved" && sub.pointsAwarded > 0) {
+    await GamificationServices.addPoints({
+      userId: String(sub.user),
+      points: sub.pointsAwarded,
+      sourceType: "task",
+      courseId: String(task.course),
+      taskId: String(task._id),
+      reason: "Reviewed task points"
+    });
+  }
 
   return sub;
 };

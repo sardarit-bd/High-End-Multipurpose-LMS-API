@@ -13,6 +13,9 @@ import { EnrollmentRoutes } from "../modules/enrollment/enrollment.routes";
 import { OrderRoutes } from "../modules/order/order.routes";
 import { PaymentRoutes } from "../modules/payment/payment.routes";
 import { PackageRoutes } from "../modules/Package/package.routes";
+import { EventRoutes } from "../modules/event/event.route";
+import { GamificationRoutes } from "../modules/gamification/gamification.routes";
+import { BadgeRoutes } from "../modules/badge/badge.routes";
 
 
 export const router = Router()
@@ -69,6 +72,18 @@ const moduleRoutes = [
     {
         path: '/packages',
         route: PackageRoutes
+    },
+    {
+        path: '/events',
+        route: EventRoutes
+    },
+    {
+        path: '/gamification',
+        route: GamificationRoutes
+    },
+    {
+        path: '/badges',
+        route: BadgeRoutes
     }
 ]
 

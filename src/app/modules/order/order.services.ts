@@ -4,24 +4,28 @@ import AppError from "../../errorHelpers/AppError";
 import { Order } from "./order.model";
 import { Course } from "../course/course.model";
 import { PaymentService } from "../payment/payment.services";
+import { OrderItemType } from "./order.interface";
 
 const resolvePrice = async (course: any, couponCode?: string) => {
     // TODO: add coupons/discount logic here
     return { price: course.price ?? 0, currency: course.currency ?? "USD" };
 };
 
-const createCheckout = async (courseId: string, userId: string, provider: "stripe" | "paypal" | "toyyibpay", couponCode?: string) => {
+const createCheckout = async (courseId: string, userId: string, provider: "stripe" | "paypal" | "toyyibpay", itemType: OrderItemType, couponCode?: string) => {
     const course = await Course.findById(courseId);
 
     if (!course || (course as any).isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
 
     const { price, currency } = await resolvePrice(course, couponCode);
-
     const order = await Order.create({
-        user: userId, course: courseId, price, currency, provider,
+        user: userId, 
+        course: courseId, 
+        price, 
+        currency, 
+        provider,
+        itemType,
         status: "pending", couponCode
     });
-
 
     const session = await PaymentService.createCheckoutSession({
         provider,
@@ -64,7 +68,7 @@ const createCheckoutForPackage = async (input: {
         orderId: String(order._id),
         amount: input.amount,
         currency: input.currency,
-        courseId: "PACKAGE_" + input.packageId, // human-readable
+        packageId: input.packageId, // human-readable
         userId: input.userId
     });
 

@@ -7,6 +7,7 @@ import { Course } from "../course/course.model";
 import { Task } from "../task/task.model";
 import { SubmissionServices } from "../submission/submission.services"; // may be unused if you grade here
 import { TaskSubmission } from "../submission/submission.model"; // for creating the mixed submission
+import { GamificationServices } from "../gamification/gamification.service";
 
 // ---------- Helpers ----------
 
@@ -120,7 +121,7 @@ const submitQuiz = async (
     : await Task.findOne({ unit: quiz.unit, course: quiz.course, type: "quiz", title: quiz.title });
 
   if (!task) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Linked Task not found for quiz");
-    console.log("Quiz Submission Task:", task);
+  console.log("Quiz Submission Task:", task);
   const totalQuestions = quiz.questions.length;
   const answers = normalizeAnswers(answersRaw, totalQuestions);
 
@@ -184,6 +185,17 @@ const submitQuiz = async (
     breakdown
   });
 
+  // Give quiz points to user
+  if (submission.pointsAwarded > 0) {
+    await GamificationServices.addPoints({
+      userId,
+      points: submission.pointsAwarded,
+      sourceType: "quiz",
+      courseId: String(task.course),
+      taskId: String(task._id),
+      reason: `Quiz points`
+    });
+  }
   const passed =
     typeof quiz.passMark === "number"
       ? (correctCount / totalQuestions) * 100 >= quiz.passMark

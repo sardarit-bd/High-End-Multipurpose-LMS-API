@@ -52,7 +52,6 @@ const resolveCourseFromLesson = async (lessonId: string) => {
 }
 
 const markCompleted = async (userId: string, courseId: string, lessonId: string) => {
-  // idempotent unique (user, lesson)
   await CompletedLesson.updateOne(
     { user: userId, lesson: lessonId },
     { $setOnInsert: { course: courseId, completedAt: new Date() } },

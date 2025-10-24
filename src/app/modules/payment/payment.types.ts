@@ -5,7 +5,8 @@ export type CreateSessionInput = {
   orderId: string;
   amount: number;
   currency: string;
-  courseId: string;
+  courseId?: string;
+  packageId?: string;
   userId: string;
 };
 

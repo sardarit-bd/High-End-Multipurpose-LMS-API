@@ -5,7 +5,7 @@ const OrderSchema = new Schema<IOrder>({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     itemType: { type: String, enum: ["course", "package"], required: true, index: true },
     package: { id: { type: String }, name: { type: Schema.Types.Mixed } },
-    course: { id: { type: String } },
+    course: { type: String },
     courseIds: [{ type: String }],
 
 

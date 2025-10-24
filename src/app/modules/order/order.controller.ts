@@ -10,9 +10,9 @@ import { get } from "mongoose";
 const createCheckout = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   
-  const { provider, couponCode, courseId } = req.body;
+  const { provider, couponCode, courseId, itemType } = req.body;
 
-  const data = await OrderServices.createCheckout(courseId, token.userId, provider, couponCode);
+  const data = await OrderServices.createCheckout(courseId, token.userId, provider,itemType, couponCode);
 
   sendResponse(res, { statusCode: httpStatus.CREATED, success: true, message: "Checkout created", data });
 });

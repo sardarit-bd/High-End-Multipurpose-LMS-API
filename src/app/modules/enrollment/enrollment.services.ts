@@ -3,6 +3,7 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { Enrollment } from "./enrollment.model";
 import { Course } from "../course/course.model";
+import { BadgeServices } from "../badge/badge.service";
 
 const ensureCourse = async (courseId: string) => {
   const course = await Course.findById(courseId);
@@ -41,9 +42,18 @@ const listCourseEnrollments = async (courseId: string, actor: { userId: string; 
   return Enrollment.find({ course: courseId, isDeleted: false }).populate("user").sort({ createdAt: -1 });
 };
 
-const updateStatus = async (courseId: string, enrollmentId: string, actor: { userId: string; role: string }, status: any) => {
+const updateStatus = async (
+  courseId: string,
+  enrollmentId: string,
+  actor: { userId: string; role: string },
+  status: "enrolled" | "completed" | "dropped"
+) => {
   const course = await ensureCourse(courseId);
-  const enrollment = await Enrollment.findOne({ _id: enrollmentId, course: courseId, isDeleted: false });
+  const enrollment = await Enrollment.findOne({
+    _id: enrollmentId,
+    course: courseId,
+    isDeleted: false
+  });
   if (!enrollment) throw new AppError(httpStatus.NOT_FOUND, "Enrollment Not Found");
 
   const isSelf = String(enrollment.user) === String(actor.userId);
@@ -52,11 +62,22 @@ const updateStatus = async (courseId: string, enrollmentId: string, actor: { use
   if (!(isSelf || isOwner || isAdmin)) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
 
   enrollment.status = status;
-  if (status === "completed") { enrollment.completedAt = new Date(); enrollment.progress = 100; }
+
+  if (status === "completed") {
+    enrollment.completedAt = new Date();
+    enrollment.progress = 100;
+    
+    await BadgeServices.autoIssueBadge({
+      userId: String(enrollment.user),
+      courseId: String(courseId)
+    });
+  }
+
   enrollment.lastActivityAt = new Date();
   await enrollment.save();
   return enrollment;
 };
+
 
 const updateProgress = async (courseId: string, enrollmentId: string, actor: { userId: string; role: string }, progress: number) => {
   const course = await ensureCourse(courseId);

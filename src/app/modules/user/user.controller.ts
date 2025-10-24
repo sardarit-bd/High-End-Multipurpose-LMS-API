@@ -35,8 +35,37 @@ const getMe = catchAsync(
     }
 );
 
+const requestInstructor = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const user = await UserServices.requestInstructor(token.userId, req.body?.note);
 
+  sendResponse<IUser>(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Instructor request submitted",
+    data: user,
+  });
+});
+
+const approveInstructor = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { userId } = req.body;
+
+  const user = await UserServices.approveInstructor(userId, { userId: token.userId, role: token.role }, {
+    action: req.body?.action ?? "approve",
+    note: req.body?.note,
+  });
+
+  sendResponse<IUser>(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: req.body?.action === "reject" ? "Request rejected" : "User promoted to instructor",
+    data: user,
+  });
+});
 export const userController = {
     createUser,
-    getMe
+    getMe,
+    requestInstructor,
+    approveInstructor
 };

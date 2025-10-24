@@ -15,5 +15,16 @@ router.post(
 );
 router.get("/me", checkAuth(...Object.values(Role)), userController.getMe);
 
+router.post(
+  "/request-instructor",
+  checkAuth(Role.STUDENT), // allow student; instructors/admins will be rejected by service if already
+  userController.requestInstructor
+);
 
+/** Admin: approve/reject request (and promote to instructor) */
+router.patch(
+  "/make-instructor",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  userController.approveInstructor
+);
 export const UserRoutes = router;
