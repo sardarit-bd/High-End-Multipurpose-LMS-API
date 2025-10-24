@@ -16,6 +16,7 @@ import { PackageRoutes } from "../modules/Package/package.routes";
 import { EventRoutes } from "../modules/event/event.route";
 import { GamificationRoutes } from "../modules/gamification/gamification.routes";
 import { BadgeRoutes } from "../modules/badge/badge.routes";
+import { UploadRoutes } from "../modules/upload/upload.route";
 
 
 export const router = Router()
@@ -84,6 +85,10 @@ const moduleRoutes = [
     {
         path: '/badges',
         route: BadgeRoutes
+    },
+    {
+        path: "/upload",
+        route: UploadRoutes
     }
 ]
 

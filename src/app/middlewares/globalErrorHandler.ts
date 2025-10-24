@@ -8,6 +8,23 @@ import { handleCastError } from "../helpers/handleCastError";
 import { handleZodError } from "../helpers/handleZoodError";
 import { handleValidationError } from "../helpers/handleValidationError";
 import AppError from "../errorHelpers/AppError";
+import cloudinary from "../config/cloudinary";
+
+
+
+export const deleteImageFromCloudinary = async (
+  public_id?: string,
+  resource_type?: "image" | "video" | "raw"
+) => {
+  if (!public_id) return;
+  try {
+    // default to image; better: store resource_type when you upload and pass it here
+    const type = resource_type || "image";
+    await cloudinary.uploader.destroy(public_id, { resource_type: type });
+  } catch (e) {
+    // swallow cleanup errors
+  }
+};
 
 export const globalErrorHandle = async(
   err: any,
@@ -77,7 +94,3 @@ export const globalErrorHandle = async(
     stack: envVars.NODE_ENV === "development" ? err.stack : null,
   });
 };
-
-async function deleteImageFromCloudinary(path: string) {
-    throw new Error("Function not implemented.");
-}
