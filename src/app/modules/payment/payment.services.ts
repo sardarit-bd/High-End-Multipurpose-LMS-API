@@ -7,6 +7,7 @@ import { Order } from "../order/order.model";
 import { EnrollmentServices } from "../enrollment/enrollment.services";
 import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
+import { GamificationServices } from "../gamification/gamification.service";
 
 const providers = {
     stripe: new StripeProvider(),
@@ -45,6 +46,24 @@ const markPaidFromWebhook = async (provider: "stripe" | "paypal" | "toyyibpay", 
     order.status = "paid";
     await order.save();
 
+    if (order.source === "ecommerce") {
+    // TODO 1: decrement stock based on order.ecommerce.items
+    // await ProductServices.decrementFromOrder(order);
+
+    // TODO 2: clear cart for user
+    // await CartServices.clear(String(order.user));
+
+    // 3: award purchase points (simple policy)
+    const points = Math.floor((order.amount || 0) / 10); // $10 => 1 point
+    if (points > 0) {
+      await GamificationServices.addPoints({
+        userId: String(order.user),
+        points,
+        sourceType: "manual",
+        reason: "Store purchase"
+      });
+    }
+  }
     // Enroll the learner
     // await EnrollmentServices.enrollSelf(normalized.courseId, normalized.userId);
     if (order.itemType === "course") {

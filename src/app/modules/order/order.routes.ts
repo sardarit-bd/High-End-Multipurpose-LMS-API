@@ -6,6 +6,13 @@ import { orderController } from "./order.controller";
 
 const router = Router();
 
+// src/app/modules/order/order.routes.ts
+router.post(
+  "/checkout/ecommerce",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.checkoutEcommerce
+);
+
 router.post(
   "/checkout",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
