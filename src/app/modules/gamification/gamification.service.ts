@@ -49,18 +49,68 @@ const getMyPoints = async (userId: string) => {
   return { wallet: wallet ?? { totalPoints: 0, byCourse: {} }, logs };
 };
 
-const getLeaderboard = async (limit = 20, courseId?: string) => {
+const getLeaderboard = async (
+  limit = 20,
+  scope: "global" | "region" | "school" = "global",
+  filterValue?: string,    // e.g., "Malaysia" or "Edufest University"
+  courseId?: string
+) => {
+  let sortField = "totalPoints";
+  const match: any = {};
+  const addFields: any = {};
+
   if (courseId) {
-    // rank by per-course points (from denormalized wallet)
-    const rows = await PointWallet.aggregate([
-      { $addFields: { coursePoints: { $ifNull: [ `$byCourse.${courseId}`, 0 ] } } },
-      { $sort: { coursePoints: -1, updatedAt: -1 } },
-      { $limit: limit }
-    ]);
-    return rows;
+    addFields.coursePoints = { $ifNull: [`$byCourse.${courseId}`, 0] };
+    sortField = "coursePoints";
   }
-  // global leaderboard
-  return PointWallet.find().sort({ totalPoints: -1, updatedAt: -1 }).limit(limit);
+
+  // Build pipeline
+  const pipeline: any[] = [];
+
+  if (Object.keys(addFields).length) {
+    pipeline.push({ $addFields: addFields });
+  }
+
+  // Join user info
+  pipeline.push({
+    $lookup: {
+      from: "users",
+      localField: "user",
+      foreignField: "_id",
+      as: "user",
+    },
+  });
+  pipeline.push({ $unwind: "$user" });
+
+  // Apply scope filter
+  if (scope === "region" && filterValue) {
+    pipeline.push({ $match: { "user.region": filterValue } });
+  }
+  if (scope === "school" && filterValue) {
+    pipeline.push({ $match: { "user.organization": filterValue } });
+  }
+
+  // Sort and limit
+  pipeline.push({ $sort: { [sortField]: -1, updatedAt: -1 } });
+  pipeline.push({ $limit: limit });
+
+  // Project final leaderboard
+  pipeline.push({
+    $project: {
+      _id: 0,
+      userId: "$user._id",
+      name: "$user.name",
+      email: "$user.email",
+      region: "$user.region",
+      organization: "$user.organization",
+      totalPoints: 1,
+      [sortField]: 1,
+      updatedAt: 1,
+    },
+  });
+
+  const result = await PointWallet.aggregate(pipeline);
+  return result;
 };
 
 export const GamificationServices = { addPoints, getMyPoints, getLeaderboard };
