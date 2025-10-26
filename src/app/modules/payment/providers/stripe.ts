@@ -20,7 +20,7 @@ export class StripeProvider implements IPaymentProvider {
         {
           price_data: {
             currency: (input.currency ?? "usd").toLowerCase(),
-            unit_amount: input.amount ?? 0, // 1999 = $19.99
+            unit_amount: Math.round(input.amount) ?? 0, // 1999 = $19.99
             product_data: {
               name: `Course Enrollment #${input.courseId}`,
               description: "Enroll in SDG Learning Course",

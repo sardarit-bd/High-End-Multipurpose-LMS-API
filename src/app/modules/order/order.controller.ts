@@ -6,59 +6,126 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { OrderServices } from "./order.services";
 
-const checkoutEcommerce = catchAsync(async (req, res) => {
-  // If you already have req.user as JwtPayload:
-  const userId = (req.user as any).userId;
+/**
+ * 🧾 Create checkout for normal course/package/event
+ */
+const createCheckout = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { provider, couponCode, courseId, itemType } = req.body;
 
-  // If cart module not done yet, accept items in body temporarily:
-  // items: [{ product, variantId?, qty, unitPrice, title, image }]
-  const { shippingAddress, items } = req.body;
+  const data = await OrderServices.createCheckout(
+    courseId,
+    token.userId,
+    provider,
+    itemType,
+    couponCode
+  );
 
-  const session = await OrderServices.startEcommerceCheckout({
-    userId,
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Checkout created successfully",
+    data,
+  });
+});
+
+/**
+ * 🛒 Checkout for eCommerce (client-provided cart)
+ * - Body: { items: [...], shippingAddress: {...}, currency?: "USD" }
+ */
+const checkoutEcommerce = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { items, shippingAddress, currency } = req.body;
+
+  const session = await OrderServices.startEcommerceCheckoutFromClient({
+    userId: token.userId,
+    items,
     shippingAddress,
-    items,               // TEMP until Cart module is in
+    currency: currency || "USD",
   });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Checkout session created",
-    data: session,       // { orderId, sessionId, checkoutUrl }
+    message: "E-commerce checkout session created successfully",
+    data: session, // { orderId, sessionId, checkoutUrl }
   });
 });
-const createCheckout = catchAsync(async (req: Request, res: Response) => {
-  const token = req.user as JwtPayload;
 
-  const { provider, couponCode, courseId, itemType } = req.body;
-
-  const data = await OrderServices.createCheckout(courseId, token.userId, provider, itemType, couponCode);
-
-  sendResponse(res, { statusCode: httpStatus.CREATED, success: true, message: "Checkout created", data });
-});
-
+/**
+ * 📦 Get my orders (student/instructor)
+ */
 const getMyOrders = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const rows = await OrderServices.getMyOrders(token.userId);
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "My orders", data: rows });
+  const orders = await OrderServices.getMyOrders(token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My orders fetched successfully",
+    data: orders,
+  });
 });
 
+/**
+ * 📄 Get order details by orderId
+ */
 const getOrderById = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   const { orderId } = req.params;
-  const doc = await OrderServices.getOrderById(orderId, { userId: token.userId, role: token.role });
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Order details", data: doc });
+
+  const doc = await OrderServices.getOrderById(orderId, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Order details retrieved successfully",
+    data: doc,
+  });
 });
 
+/**
+ * 🔍 Get order details by Stripe/Toyyib sessionId
+ */
 const getOrderBySession = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   const { sessionId } = req.params;
-  const doc = await OrderServices.getOrderBySessionId(sessionId, { userId: token.userId, role: token.role });
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Order details", data: doc });
+
+  const doc = await OrderServices.getOrderBySessionId(sessionId, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Order details retrieved successfully",
+    data: doc,
+  });
 });
 
+/**
+ * 🧾 Admin: Get all orders (global list)
+ */
 const getOrders = catchAsync(async (req: Request, res: Response) => {
-  const doc = await OrderServices.getOrders();
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Order details", data: doc });
+  const orders = await OrderServices.getOrders();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "All orders retrieved successfully",
+    data: orders,
+  });
 });
-export const orderController = { createCheckout, getMyOrders, getOrderById, getOrderBySession, getOrders, checkoutEcommerce };
+
+export const orderController = {
+  createCheckout,
+  checkoutEcommerce,
+  getMyOrders,
+  getOrderById,
+  getOrderBySession,
+  getOrders,
+};
