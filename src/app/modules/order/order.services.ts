@@ -9,9 +9,8 @@ import { OrderSource } from "./order.interface";
 
 
 import { Types } from "mongoose";
-import { Role } from "../user/user.interface";
-import { GamificationServices } from "../gamification/gamification.services";
-import { Product } from "../ecom/product/product.model";
+import { GamificationServices } from "../gamification/gamification.service";
+
 
 const assertAdmin = (actor: { userId: string; role: string }) => {
   const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
@@ -36,7 +35,7 @@ const fulfillEcommerceOrder = async (
   assertAdmin(actor);
   const ord = await ensureOrder(orderId);
 
-  if (ord.source !== "ecommerce")
+  if (ord.itemType !== "ecommerce")
     throw new AppError(httpStatus.BAD_REQUEST, "Only e-commerce orders can be fulfilled");
 
   if (ord.status !== "paid")
@@ -65,7 +64,7 @@ const updateEcommerceTracking = async (
   assertAdmin(actor);
   const ord = await ensureOrder(orderId);
 
-  if (ord.source !== "ecommerce")
+  if (ord.itemType !== "ecommerce")
     throw new AppError(httpStatus.BAD_REQUEST, "Only e-commerce orders can be tracked");
 
   if (ord.status !== "paid")
@@ -95,7 +94,7 @@ const markEcommerceDelivered = async (
   assertAdmin(actor);
   const ord = await ensureOrder(orderId);
 
-  if (ord.source !== "ecommerce")
+  if (ord.itemType !== "ecommerce")
     throw new AppError(httpStatus.BAD_REQUEST, "Only e-commerce orders can be delivered");
 
   if (ord.status !== "paid")
@@ -108,8 +107,8 @@ const markEcommerceDelivered = async (
   if (ord.ecommerce.fulfillment.status === "delivered") return ord;
 
   ord.ecommerce.fulfillment.status = "delivered";
-  ord.ecommerce.fulfillment.deliveredAt = payload.deliveredAt
-    ? new Date(payload.deliveredAt)
+  ord.ecommerce.fulfillment.deliveredAt = payload?.deliveredAt
+    ? new Date(payload?.deliveredAt)
     : new Date();
 
   await ord.save();

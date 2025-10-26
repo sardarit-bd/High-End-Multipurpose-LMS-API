@@ -6,7 +6,29 @@ import { orderController } from "./order.controller";
 
 const router = Router();
 
-// src/app/modules/order/order.routes.ts
+router.patch(
+  "/:id/fulfill",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.fulfillEcommerce
+);
+
+router.patch(
+  "/:id/track",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.updateTracking
+);
+
+router.patch(
+  "/:id/deliver",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.markDelivered
+);
+
+router.patch(
+  "/:id/cancel",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  orderController.cancelOrder
+);
 router.post(
   "/checkout/ecommerce",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
