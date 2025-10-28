@@ -63,7 +63,7 @@ const userSchema = new Schema<IUser>({
     },
     isVerified: {
         type: Boolean,
-        default: false
+        default: true
     },
     auths: [authProviderSchema],
     instructorRequest: { type: instructorRequestSchema, default: { status: "none" } },
