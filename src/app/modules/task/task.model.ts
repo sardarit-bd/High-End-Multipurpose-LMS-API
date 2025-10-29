@@ -12,6 +12,7 @@ const TaskSchema = new Schema<ITask>(
     perCorrectPoint: { type: Number },          // quiz
     maxPoints:       { type: Number },          // cap for any type
 
+    dueDate: {type: Date},
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz" }, // when type === "quiz"
 
     isDeleted: { type: Boolean, default: false },

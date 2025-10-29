@@ -9,6 +9,7 @@ export interface ITask {
     title: String;
     description?: String;
     type: TaskType;
+    dueDate: Date;
 
     // Scoring config by type
     perCorrectPoint?: number;       // quiz only

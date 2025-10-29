@@ -6,9 +6,9 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { QuizServices } from "./quiz.services";
 
-const createQuiz = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
-  const { unitId } = req.body;
+const createQuiz = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
+  const { unitId } = req.body;
 
   const created = await QuizServices.createQuiz(unitId, req.body, {
     userId: token.userId,
@@ -18,10 +18,46 @@ const createQuiz = catchAsync(async (req: Request, res: Response, _next: NextFun
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Quiz created",
+    message: "Quiz shell created successfully",
     data: created,
   });
 });
+
+const addQuestion = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { quizId } = req.body;
+
+  const updated = await QuizServices.addQuestionToQuiz(quizId, {
+    userId: token.userId,
+    role: token.role,
+  }, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Question added successfully",
+    data: updated,
+  });
+});
+
+const getQuizQuestions = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { quizId } = req.params;
+
+  const data = await QuizServices.getQuizQuestions(quizId, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Quiz questions retrieved successfully",
+    data,
+  });
+});
+
+
 
 const listQuizzes = catchAsync(async (req: Request, res: Response) => {
   const { unitId } = req.params;
@@ -54,4 +90,4 @@ const submitQuiz = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const quizController = { createQuiz, listQuizzes, submitQuiz };
+export const quizController = { createQuiz, listQuizzes, submitQuiz, addQuestion, getQuizQuestions};

@@ -57,9 +57,8 @@ const createQuiz = async (
   payload: {
     title: Record<string, string>;
     passMark?: number;
-    questions: any[];            // questions include type: "mcq" | "short"; mcq has options; short has maxPoints
-    perCorrectPoint: number;     // default per-correct for MCQs (stored on Task)
-    maxPoints?: number;          // optional quiz cap
+    perCorrectPoint?: number;
+    maxPoints?: number;
   },
   actor: { userId: string; role: string }
 ) => {
@@ -73,27 +72,104 @@ const createQuiz = async (
   const isAdmin = actor.role === "ADMIN";
   if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
 
-  // 1) Create Task (quiz)
+  // Create Task first (1–1 with quiz)
   const task = await Task.create({
     unit: unit._id,
     course: course._id,
     title: payload.title,
     type: "quiz",
-    perCorrectPoint: payload.perCorrectPoint,
-    maxPoints: payload.maxPoints
+    perCorrectPoint: payload.perCorrectPoint || 1,
+    maxPoints: payload.maxPoints,
   });
 
-  // 2) Create Quiz linked to Task
+  // Create Quiz shell (no questions yet)
   const quiz = await Quiz.create({
     unit: unit._id,
     course: course._id,
     task: task._id,
     title: payload.title,
-    passMark: payload.passMark,
-    questions: payload.questions
+    passMark: payload.passMark || 50,
+    questions: [], // Empty initially
   });
 
   return { quiz, task };
+};
+
+const addQuestionToQuiz = async (
+  quizId: string,
+  actor: { userId: string; role: string },
+  question: {
+    type: "mcq" | "short";
+    prompt: string;
+    options?: { text: string; isCorrect?: boolean }[];
+    maxPoints?: number;
+    perCorrectPoint?: number;
+  }
+) => {
+  const quiz = await Quiz.findById(quizId);
+  if (!quiz || quiz.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Quiz Not Found");
+
+  const course = await Course.findById(quiz.course);
+  if (!course) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  // Validate MCQ options
+  if (question.type === "mcq" && (!question.options || question.options.length < 2)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "MCQ must have at least 2 options");
+  }
+
+  // Push question to array
+  quiz.questions.push({
+    type: question.type,
+    prompt: question.prompt,
+    options: question.options || [],
+    maxPoints: question.maxPoints,
+    perCorrectPoint: question.perCorrectPoint,
+  });
+
+  await quiz.save();
+  return quiz;
+};
+
+
+const getQuizQuestions = async (
+  quizId: string,
+  actor: { userId: string; role: string }
+) => {
+  const quiz = await Quiz.findById(quizId).populate("course unit task");
+  if (!quiz || quiz.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Quiz Not Found");
+
+  const course = quiz.course;
+  const isOwner =
+    course && String((course as any).instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+
+  // Deep clone questions
+  const questions = JSON.parse(JSON.stringify(quiz.questions || []));
+
+  // For students → hide correct answers
+  if (!isOwner && !isAdmin) {
+    for (const q of questions) {
+      if (q.type === "mcq" && q.options?.length) {
+        q.options = q.options.map((o: any) => ({
+          text: o.text,
+        }));
+      }
+    }
+  }
+
+  return {
+    quizId: quiz._id,
+    title: quiz.title,
+    unit: quiz.unit,
+    course: quiz.course,
+    task: quiz.task,
+    passMark: (quiz as any).passMark ?? 50,
+    questions,
+  };
 };
 
 // ---------- Submit (MCQ auto + Short pending review) ----------
@@ -220,4 +296,4 @@ const listByUnit = async (unitId: string) => {
   return Quiz.find({ unit: unitId, isDeleted: false }).sort({ createdAt: 1 });
 };
 
-export const QuizServices = { createQuiz, submitQuiz, listByUnit };
+export const QuizServices = { createQuiz, submitQuiz, listByUnit, addQuestionToQuiz, getQuizQuestions };

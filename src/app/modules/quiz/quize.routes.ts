@@ -13,6 +13,19 @@ router.post(
   quizController.createQuiz
 );
 
+
+router.post(
+  "/add-question",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  quizController.addQuestion
+);
+
+router.get(
+  "/:quizId/questions",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  quizController.getQuizQuestions
+);
+
 /** List quizzes for a unit (public) */
 router.get(
   "/:unitId",
