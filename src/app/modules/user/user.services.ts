@@ -1,6 +1,6 @@
 import AppError from "../../errorHelpers/AppError";
 import { IAuthProvider, IUser, Role } from "./user.interface";
-import { User } from "./user.model";
+import { Instructor, User } from "./user.model";
 import httpStatus from 'http-status-codes'
 import bcryptjs from 'bcryptjs';
 import { envVars } from "../../config/env";
@@ -32,6 +32,12 @@ const createUser = async (payload: Partial<IUser>) => {
         ...rest,
     });
 
+    if(user.role === Role.INSTRUCTOR){
+      const inst = await Instructor.create({
+        userId: user._id
+      })
+    }
+
     const userObj = user.toObject();
     delete userObj.password;
     return userObj;
@@ -44,6 +50,16 @@ const getMe = async (userId: string) => {
   }
 
   return user;
+};
+
+const getInstructor = async (userId: string) => {
+  const instructor = await Instructor.findOne({userId}).populate('userId', 'name email picture intro')
+
+  if (!instructor) {
+    throw new AppError(httpStatus.NOT_FOUND, "Instructor Not Found");
+  }
+
+  return instructor;
 };
 
 const requestInstructor = async (userId: string, note?: string) => {
@@ -113,5 +129,6 @@ export const UserServices = {
     getMe,
     createUser,
     requestInstructor,
-    approveInstructor
+    approveInstructor,
+    getInstructor
 };

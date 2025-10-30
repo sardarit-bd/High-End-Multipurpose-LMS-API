@@ -33,6 +33,7 @@ export interface IUser {
     email: string,
     password?: string,
     phone?: string,
+    intro?: string,
     picture?: string,
     address?: string,
     isDeleted?: string,
@@ -44,4 +45,16 @@ export interface IUser {
     auths: IAuthProvider[],
     createdAt?: Date,
     instructorRequest?: IInstructorRequest;
+}
+
+export interface IInstructor {
+    _id?: Types.ObjectId,
+    noOfCourse?: number,
+    totalHr ?: number,
+    enrolledStudent?: number,
+    skills?: string[],
+    ratting?: number,
+    noOfRatting?: number,
+    designation: string,
+    userId: Types.ObjectId 
 }

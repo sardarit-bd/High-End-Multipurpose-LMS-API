@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IAuthProvider, IInstructorRequest, IsActive, IUser, Role } from "./user.interface";
+import { IAuthProvider, IInstructor, IInstructorRequest, IsActive, IUser, Role } from "./user.interface";
 
 const authProviderSchema = new Schema<IAuthProvider>({
     provider: {
@@ -47,6 +47,9 @@ const userSchema = new Schema<IUser>({
     picture: {
         type: String
     },
+    intro: {
+        type: String
+    },
     address: {
         type: String
     },
@@ -74,3 +77,35 @@ const userSchema = new Schema<IUser>({
 
 
 export const User = model<IUser>("User", userSchema)
+
+const instructorSchema = new Schema<IInstructor>({
+    designation: String,
+    enrolledStudent: {
+        type: Number,
+        default: 0
+    },
+    noOfCourse: {
+        type: Number,
+        default: 0
+    },
+    noOfRatting: {
+        type: Number,
+        default: 0
+    },
+    ratting: {
+        type: Number,
+        default: 0
+    },
+    skills: {
+        type: [String]
+    },
+    totalHr: {
+        type: Number,
+        default: 0
+    },
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
+})
+export const Instructor = model<IInstructor>("instructor", instructorSchema)

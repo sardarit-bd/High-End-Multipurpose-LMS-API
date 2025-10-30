@@ -35,6 +35,21 @@ const getMe = catchAsync(
     }
 );
 
+const getInstructor = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const {id} = req.params;
+
+         const user = await UserServices.getInstructor(id);
+
+        sendResponse(res, {
+            statusCode: httpStatus.CREATED,
+            success: true,
+            message: "Instructor is fetched Successfully",
+            data: user,
+        });
+    }
+);
+
 const requestInstructor = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   const user = await UserServices.requestInstructor(token.userId, req.body?.note);
@@ -67,5 +82,6 @@ export const userController = {
     createUser,
     getMe,
     requestInstructor,
-    approveInstructor
+    approveInstructor,
+    getInstructor
 };

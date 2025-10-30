@@ -10,28 +10,47 @@ const createCourse = async (payload: Omit<ICourse, "slug" | "isDeleted">) => {
   return course.toObject();
 };
 
-const listCourses = async (query: ICourseListQuery) => {
+const listCourses = async (query: any) => {
   const filter: FilterQuery<ICourse> = { isDeleted: false };
 
+  // 🔍 Full-text search
   if (query.q) filter.$text = { $search: query.q };
-  if (query.category) filter.category = query.category;
-  if (query.level) filter.level = query.level;
-  if (query.status) filter.status = query.status;
-  if (query.instructor) filter.instructor = query.instructor as any;
 
-  if (query.minPrice != null || query.maxPrice != null) {
-    filter.price = {};
-    if (query.minPrice != null) (filter.price as any).$gte = query.minPrice;
-    if (query.maxPrice != null) (filter.price as any).$lte = query.maxPrice;
+  // 🎯 Category (support single or multiple)
+  
+  if (query.categories) {
+    const categories = query.categories.split(",")
+    filter.category = { $in: categories };
   }
 
+  // 📚 Level
+  if (query.level) filter.level = query.level;
+
+  // ✅ Status (published/draft)
+  if (query.status) filter.status = query.status;
+
+  // 👨‍🏫 Instructor
+  if (query.instructor) filter.instructor = query.instructor as any;
+
+  // 💰 Free vs Paid filter
+  if (typeof query.isFree === "boolean") {
+    filter.price = query.isFree ? 0 : { $gt: 0 };
+  }
+
+  // 📄 Pagination and Sorting
   const page = Number(query.page ?? 1);
   const limit = Number(query.limit ?? 12);
   const skip = (page - 1) * limit;
   const sort = query.sort ?? "-createdAt";
 
+  // ⚡ Fetch items and total count
+  console.log(filter)
   const [items, total] = await Promise.all([
-    Course.find(filter).sort(sort).skip(skip).limit(limit),
+    Course.find(filter)
+      .populate("instructor", "name email") // optional
+      .sort(sort)
+      .skip(skip)
+      .limit(limit),
     Course.countDocuments(filter),
   ]);
 
