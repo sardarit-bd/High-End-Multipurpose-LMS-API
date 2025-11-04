@@ -14,7 +14,7 @@ router.get("/:courseId/me",
     checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
     enrollmentController.getMyEnrollment);
     
-router.get("/me/enrollments",
+router.get("/me",
     checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
     enrollmentController.listMyEnrollments);
 

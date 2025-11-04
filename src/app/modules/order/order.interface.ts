@@ -48,6 +48,8 @@ export interface IOrder {
     courseIds?: string[];
     course?: Types.ObjectId;
     package?: Types.ObjectId;
+    billingInfo?: object,
+
 
     price: number;         // smallest unit (e.g., cents)
     currency: string;      // "USD","MYR","BDT", etc.

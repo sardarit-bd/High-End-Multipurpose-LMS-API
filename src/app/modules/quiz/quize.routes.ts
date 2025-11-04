@@ -28,7 +28,7 @@ router.get(
 
 /** List quizzes for a unit (public) */
 router.get(
-  "/:unitId",
+  "/:taskId",
   quizController.listQuizzes
 );
 

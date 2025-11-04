@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 import { IOrder } from "./order.interface";
+import { object } from "zod";
 const orderEcommerceItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: "Product" },
     variantId: { type: Schema.Types.ObjectId },
@@ -35,6 +36,7 @@ const OrderSchema = new Schema<IOrder>({
     package: { id: { type: String }, name: { type: Schema.Types.Mixed } },
     course: { type: String },
     courseIds: [{ type: String }],
+    billingInfo: {type: Object},
 
     ecommerce: { type: orderEcommerceSchema },
     price: { type: Number, required: true },

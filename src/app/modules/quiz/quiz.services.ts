@@ -290,10 +290,10 @@ const submitQuiz = async (
 
 // ---------- List by Unit ----------
 
-const listByUnit = async (unitId: string) => {
-  const unit = await Unit.findById(unitId);
-  if (!unit || unit.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Unit Not Found");
-  return Quiz.find({ unit: unitId, isDeleted: false }).sort({ createdAt: 1 });
+const listByUnit = async (taskId: string) => {
+  const task = await Task.findById(taskId);
+  if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
+  return Quiz.find({ task: taskId, isDeleted: false }).sort({ createdAt: 1 });
 };
 
 export const QuizServices = { createQuiz, submitQuiz, listByUnit, addQuestionToQuiz, getQuizQuestions };

@@ -175,7 +175,8 @@ const createCheckout = async (
   userId: string,
   provider: "stripe" | "paypal" | "toyyibpay",
   itemType: OrderSource,
-  couponCode?: string
+  couponCode?: string,
+  billingInfo?: {}
 ) => {
   const course = await Course.findById(courseId);
   if (!course || (course as any).isDeleted)
@@ -192,18 +193,20 @@ const createCheckout = async (
     itemType,
     status: "pending",
     couponCode,
+    billingInfo
   });
 
   const session = await PaymentService.createCheckoutSession({
     provider,
     orderId: String(order._id),
-    amount: price,
+    amount: price * 100,
     currency,
     courseId: String(course._id),
     userId: String(userId),
     source: itemType,
   });
 
+  console.log("Created checkout session:", session);
   order.providerSessionId = session.sessionId;
   await order.save();
 

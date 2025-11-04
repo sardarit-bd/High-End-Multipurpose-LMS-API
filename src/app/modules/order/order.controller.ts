@@ -11,14 +11,15 @@ import { OrderServices } from "./order.services";
  */
 const createCheckout = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const { provider, couponCode, courseId, itemType } = req.body;
+  const { provider, couponCode, courseId, itemType, billingInfo } = req.body;
 
   const data = await OrderServices.createCheckout(
     courseId,
     token.userId,
     provider,
     itemType,
-    couponCode
+    couponCode,
+    billingInfo
   );
 
   sendResponse(res, {

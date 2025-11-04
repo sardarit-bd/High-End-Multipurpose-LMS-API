@@ -60,8 +60,8 @@ const getQuizQuestions = catchAsync(async (req: Request, res: Response) => {
 
 
 const listQuizzes = catchAsync(async (req: Request, res: Response) => {
-  const { unitId } = req.params;
-  const items = await QuizServices.listByUnit(unitId);
+  const { taskId } = req.params;
+  const items = await QuizServices.listByUnit(taskId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -5,8 +5,6 @@ import httpStatus from 'http-status-codes'
 import bcryptjs from 'bcryptjs';
 import { envVars } from "../../config/env";
 
-
-
 const createUser = async (payload: Partial<IUser>) => {
     const { email, password, ...rest } = payload;
 
