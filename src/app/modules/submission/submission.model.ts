@@ -7,6 +7,9 @@ const SubmissionSchema = new Schema<ITaskSubmission>(
     unit:   { type: Schema.Types.ObjectId, ref: "Unit", required: true, index: true },
     course: { type: Schema.Types.ObjectId, ref: "Course", required: true, index: true },
     user:   { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    quiz:   { type: Schema.Types.ObjectId, ref: "Quiz" },
+    type:   { type: String, enum: ["quiz", "task"], required: true },
+    instructor: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
     artifactUrl: { type: String },
     note: { type: String },

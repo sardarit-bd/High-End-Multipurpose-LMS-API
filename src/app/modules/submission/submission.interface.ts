@@ -17,6 +17,10 @@ export interface ITaskSubmission {
     unit: Types.ObjectId;
     course: Types.ObjectId;
     user: Types.ObjectId;
+    quiz?: Types.ObjectId; 
+    type: "quiz" | "task";
+    instructor: Types.ObjectId;
+
 
     // For file/video tasks
     artifactUrl?: string;         // uploaded file/video link

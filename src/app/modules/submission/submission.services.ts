@@ -28,6 +28,8 @@ const createReviewedSubmission = async (
     note: payload.note,
     status: "pending_review",
     pointsAwarded: 0,
+    type: "task",
+    instructor: (await Course.findById(task.course))?.instructor,
   });
 
   return sub;

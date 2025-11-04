@@ -197,7 +197,7 @@ const submitQuiz = async (
     : await Task.findOne({ unit: quiz.unit, course: quiz.course, type: "quiz", title: quiz.title });
 
   if (!task) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Linked Task not found for quiz");
-  console.log("Quiz Submission Task:", task);
+  
   const totalQuestions = quiz.questions.length;
   const answers = normalizeAnswers(answersRaw, totalQuestions);
 
@@ -258,7 +258,10 @@ const submitQuiz = async (
     user: userId,
     pointsAwarded: awardedNow,
     status,
-    breakdown
+    breakdown,
+    quiz: quiz._id,
+    type: "quiz",
+    instructor: (await Course.findById(quiz.course))?.instructor,
   });
 
   // Give quiz points to user
