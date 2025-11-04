@@ -28,6 +28,8 @@ const createReviewedSubmission = async (
     note: payload.note,
     status: "pending_review",
     pointsAwarded: 0,
+    type: "task",
+    instructor: (await Course.findById(task.course))?.instructor,
   });
 
   return sub;
@@ -47,7 +49,6 @@ const gradeSubmission = async (
 ) => {
   const task = await Task.findById(taskId);
   if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
-  console.log("Task fetched for grading:", task);
   const course = await Course.findById(task.course);
   if (!course) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
 
@@ -136,7 +137,6 @@ const gradeSubmission = async (
  
 const myCourseTotal = async (courseId: string, userId: string) => {
     const course = await TaskSubmission.findOne({ course: courseId, user: userId });
-    console.log("Course fetched:", course);
   const agg = await TaskSubmission.aggregate([
     { $match: { course: courseId}},
     // { $group: { _id: null, pointsAwarded: { $sum: "$pointsAwarded" } } },

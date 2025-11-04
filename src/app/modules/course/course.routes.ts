@@ -27,7 +27,7 @@ router.get(
 );
 
 /** GET /courses/:id — public */
-router.get("/:id", checkAuth(Role.SUPER_ADMIN), courseController.getCourse);
+router.get("/:id", courseController.getCourse);
 
 /** PATCH /courses/:id — INSTRUCTOR | ADMIN + ownership check in service */
 router.patch(

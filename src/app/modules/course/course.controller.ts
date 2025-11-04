@@ -42,6 +42,7 @@ const getCourse = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
 const updateCourse = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   

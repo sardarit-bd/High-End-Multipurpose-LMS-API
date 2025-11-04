@@ -5,8 +5,8 @@ import { gamificationController } from "./gamification.controller";
 
 const router = Router();
 
-router.get("/me", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN), gamificationController.getMyPoints);
-router.get("/leaderboard", gamificationController.leaderboard); // public/global
+router.get("/me", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), gamificationController.getMyPoints);
+router.get("/leaderboard", gamificationController.getLeaderboard); // public/global
 
 // optional manual award
 router.post(

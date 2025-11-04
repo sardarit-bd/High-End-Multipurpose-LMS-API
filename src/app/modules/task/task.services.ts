@@ -25,6 +25,7 @@ const create = async (unitId: string, payload: Omit<ITask, "unit"|"course"|"isDe
     perCorrectPoint: payload.perCorrectPoint,
     maxPoints: payload.maxPoints,
     quizId: payload.quizId,
+    dueDate: payload.dueDate
   });
 
   return doc;

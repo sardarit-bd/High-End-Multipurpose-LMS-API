@@ -11,11 +11,21 @@ const getMyPoints = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "My points", data });
 });
 
-const leaderboard = catchAsync(async (req: Request, res: Response) => {
-  const limit = req.query.limit ? Number(req.query.limit) : 20;
-  const courseId = req.query.courseId as string | undefined;
-  const data = await GamificationServices.getLeaderboard(limit, courseId);
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Leaderboard", data });
+const getLeaderboard = catchAsync(async (req, res) => {
+  const { limit, scope, value, courseId } = req.query;
+  const data = await GamificationServices.getLeaderboard(
+    Number(limit) || 20,
+    (scope as any) || "global",
+    value as string,
+    courseId as string
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Leaderboard fetched successfully",
+    data,
+  });
 });
 
 // optional: admin/instructor manual award
@@ -25,4 +35,4 @@ const award = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Points awarded", data: wallet });
 });
 
-export const gamificationController = { getMyPoints, leaderboard, award };
+export const gamificationController = { getMyPoints, getLeaderboard, award };

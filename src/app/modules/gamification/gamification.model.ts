@@ -4,7 +4,7 @@ import { IPointLog, IPointWallet } from "./gamification.interface";
 const PointLogSchema = new Schema<IPointLog>({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
   points: { type: Number, required: true },
-  sourceType: { type: String, enum: ["event","quiz","task","manual"], required: true, index: true },
+  sourceType: { type: String, enum: ["event","quiz","task","manual", "package", "course", "purchase"], required: true, index: true },
   course: { type: Schema.Types.ObjectId, ref: "Course" },
   event: { type: Schema.Types.ObjectId, ref: "Event" },
   task: { type: Schema.Types.ObjectId, ref: "Task" },

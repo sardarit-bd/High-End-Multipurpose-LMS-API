@@ -20,7 +20,8 @@ const CourseSchema = new Schema<ICourse>(
   { timestamps: true, versionKey: false }
 );
 
-CourseSchema.index({ title: "text", description: "text", tags: "text" });
+CourseSchema.index({ title: "text", description: "text", category: "text" });
+
 
 CourseSchema.pre("save", function (next) {
   if (!this.slug && this.title) {
