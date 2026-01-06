@@ -34,7 +34,7 @@ export const globalErrorHandle = async(
   next: NextFunction
 ) => {
   if(envVars.NODE_ENV === 'development'){
-    console.log(err)
+    // console.log(err)
   }
   
   let statusCode = 500;
@@ -69,14 +69,12 @@ export const globalErrorHandle = async(
     message = simplifiedError.message;
     statusCode = simplifiedError.statusCode;
     errorsSource = simplifiedError.errorSources as IErrorSources[]
-
     // mongoose validation error
   } else if (err.name == "ValidationError") {
     const simplifiedError = handleValidationError(err)
     message = simplifiedError.message
     statusCode = simplifiedError.statusCode
     errorsSource = simplifiedError.errorSources as IErrorSources[]
-
 
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;

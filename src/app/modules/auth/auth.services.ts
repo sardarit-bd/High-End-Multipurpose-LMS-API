@@ -7,7 +7,7 @@ import { createUserTokens } from "../../utils/userTokens";
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import jwt  from "jsonwebtoken";
-import { sendEmail } from "../../utils/sendEmail";
+import { sendResetPasswordEmail } from "../../utils/sendEmail";
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -79,16 +79,8 @@ const forgotPassword = async (email: string) => {
   });
 
   const resetUrlLink = `${envVars.FRONTEND_URL}/reset-password?id=${user._id}&token=${resetToken}`;
-
-  sendEmail({
-    to: user.email,
-    subject: "Password Reset",
-    templateName: "forgetPassword",
-    templateData: {
-      name: user.name,
-      resetUrlLink,
-    },
-  });
+  const res = await sendResetPasswordEmail(user.email, resetUrlLink);
+  return true;
 };
 const resetPassword = async (
   decodedToken: JwtPayload,

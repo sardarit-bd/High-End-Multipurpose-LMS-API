@@ -2,6 +2,7 @@
 import { IGenericErrorResponse, IErrorSources } from "../interfaces/error.types";
 
 export const handleZodError = (err: any): IGenericErrorResponse => {
+
   const errorSources: IErrorSources[] = []
    err.issues.forEach((issue: any) => {
       errorSources.push({
@@ -9,7 +10,6 @@ export const handleZodError = (err: any): IGenericErrorResponse => {
         message: issue.message,
       });
     });
-
     return{
       message: 'Zod Error',
       statusCode: 400,

@@ -6,6 +6,7 @@ import bcryptjs from 'bcryptjs';
 import { envVars } from "../../config/env";
 
 const createUser = async (payload: Partial<IUser>) => {
+  console.log("Payload in service:", payload);
     const { email, password, ...rest } = payload;
 
     const isUserExist = await User.findOne({ email });

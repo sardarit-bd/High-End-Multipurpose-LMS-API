@@ -1,64 +1,78 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { envVars } from "../config/env";
-import ejs from "ejs";
-import path from "path";
-import fs from "fs";
-import AppError from "../errorHelpers/AppError";
 
-// initialize Resend client
-const resend = new Resend(envVars.EMAIL_SENDER.SMTP_HOST);
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: envVars.EMAIL_SENDER.SMTP_USER,
+        pass: envVars.EMAIL_SENDER.SMTP_PASS,
+    },
+});
 
-function resolveTemplatePath(name: string) {
-  const prodPath = path.join(__dirname, "template", `${name}.ejs`);
-  const devPath = path.join(process.cwd(), "src", "app", "utils", "template", `${name}.ejs`);
-  return fs.existsSync(prodPath) ? prodPath : devPath;
-}
+const generateEmailTemplate = (title: string, message: string, extra = "") => {
+    return `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; background: #f8f9fa;">
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h2 style="color: #005f99; margin: 0;">${title}</h2>
+    </div>
 
-interface ISendEmailOptions {
-  to: string;
-  subject: string;
-  templateName: string;
-  templateData?: Record<string, any>;
-  attachments?: {
-    filename: string;
-    content: Buffer | string;
-    contentType: string;
-  }[];
-}
+    <p style="font-size: 15px; color: #333; line-height: 1.6;">
+      ${message}
+    </p>
 
-export const sendEmail = async ({
-  to,
-  subject,
-  attachments,
-  templateName,
-  templateData = {},
-}: ISendEmailOptions) => {
-  try {
-    const templatePath = resolveTemplatePath(templateName);
-    if (!fs.existsSync(templatePath)) {
-      throw new Error(`Template not found at ${templatePath}`);
+    ${extra}
+
+    <br><br>
+    <p style="font-size: 13px; color: #666;">
+      Best regards,<br>
+      <strong>Your LMS Team</strong><br>
+    </p>
+  </div>
+  `;
+};
+
+export const sendResetPasswordEmail = async (email: string, resetUrl: string) => {
+    try {
+        const subject = "Password Reset Request";
+        const message = `
+      We received a request to reset the password for your 
+      <strong>LMS</strong> account.
+
+      <br><br>
+      Click the button below to reset your password. This link will expire in 
+      <strong>15 minutes</strong> for security reasons.
+    `;
+
+        const button = `
+      <div style="margin-top: 20px;">
+        <a href="${resetUrl}" target="_blank" 
+          style="display: inline-block; padding: 12px 20px; background: #005F99; color: #fff;
+          text-decoration: none; border-radius: 5px; font-weight: bold;">
+          Reset Password
+        </a>
+      </div>
+
+      <p style="margin-top: 10px; font-size: 13px; color: #777;">
+        If the button doesn't work, you can use this link:<br>
+        <a href="${resetUrl}">${resetUrl}</a>
+      </p>
+
+      <p style="margin-top: 20px; font-size: 13px; color: #444;">
+        If you did not request a password reset, please ignore this email.
+      </p>
+    `;
+
+        const mailOptions = {
+            from: envVars.EMAIL_SENDER.SMTP_USER, // Use consistent env var
+            to: email,
+            subject,
+            html: generateEmailTemplate(subject, message, button),
+        };
+
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error("Password reset email error:", error);
+        throw new Error("Failed to send password reset email");
     }
-
-    // Render EJS template
-    const html = await ejs.renderFile(templatePath, templateData);
-
-    // Send email via Resend API
-    const response = await resend.emails.send({
-      from: envVars.EMAIL_SENDER?.SMTP_FROM || "LMS <sardarit.bd.official@gmail.com>",
-      to,
-      subject,
-      html,
-      attachments: attachments?.map(a => ({
-        filename: a.filename,
-        content: a.content.toString(),
-        type: a.contentType,
-      })),
-    });
-
-    console.log(`✅ Email sent to ${to}`, response);
-    return response;
-  } catch (error: any) {
-    console.error("email sending error:", error);
-    throw new AppError(500, error?.message || "Email error");
-  }
 };
