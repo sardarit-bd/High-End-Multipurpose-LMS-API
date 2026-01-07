@@ -30,6 +30,7 @@ const createLesson = async (
     contentType: payload.contentType,
     contentUrl: payload.contentUrl,
     orderIndex: payload.orderIndex ?? 1,
+    durationSec: payload.durationSec,
   });
 
   return doc;
@@ -58,4 +59,32 @@ const markCompleted = async (userId: string, courseId: string, lessonId: string)
     { upsert: true }
   );
 }
-export const LessonServices = { createLesson, listLessons, resolveCourseFromLesson, markCompleted };
+
+const updateLesson = async (
+  lessonId: string,
+  payload: Partial<ILesson>,
+  actor: { userId: string; role: string }
+) => {
+  const lesson = await Lesson.findById(lessonId);
+  if (!lesson || lesson.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Lesson Not Found");
+
+  const unit = await Unit.findById(lesson.unit);
+  if (!unit || unit.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Unit Not Found");
+
+  const course = await Course.findById(unit.course);
+  if (!course || course.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  const updated = await Lesson.findByIdAndUpdate(
+    lessonId,
+    { ...payload, updatedAt: new Date() },
+    { new: true }
+  );
+
+  return updated;
+};
+
+export const LessonServices = { createLesson, listLessons, resolveCourseFromLesson, markCompleted, updateLesson };

@@ -12,3 +12,11 @@ export const createLessonZod = z.object({
     orderIndex: z.number().int().min(1).default(1),
     unit: z.string().min(1, "unitId is required")
 });
+
+export const updateLessonZod = z.object({
+    title: z.string().min(2, "Title must be at least 2 characters").optional(),
+    contentType: z.enum(["video", "article", "pdf", "audio", "link"]).optional(),
+    contentUrl: z.string().url().optional(),
+    durationSec: z.number().int().min(1).optional(),
+    orderIndex: z.number().int().min(1).optional(),
+});

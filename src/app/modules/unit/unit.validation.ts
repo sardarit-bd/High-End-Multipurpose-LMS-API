@@ -9,3 +9,8 @@ export const createUnitZod = z.object({
   orderIndex: z.number().int().min(1).default(1),
     course: z.string().min(1, "courseId is required"),
 });
+
+export const updateUnitZod = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters").optional(),
+  orderIndex: z.number().int().min(1).optional(),
+});

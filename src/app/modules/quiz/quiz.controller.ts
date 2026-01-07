@@ -57,6 +57,41 @@ const getQuizQuestions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateQuestion = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { questionId } = req.params;
+  const { quizId } = req.body;
+
+  const updated = await QuizServices.updateQuestionToQuiz(quizId, questionId, {
+    userId: token.userId,
+    role: token.role,
+  }, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Question updated successfully",
+    data: updated,
+  });
+});
+
+const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { questionId } = req.params;
+
+  const result = await QuizServices.deleteQuestionFromQuiz(questionId, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Question deleted successfully",
+    data: result,
+  });
+});
+
 
 
 const listQuizzes = catchAsync(async (req: Request, res: Response) => {
@@ -90,4 +125,15 @@ const submitQuiz = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const quizController = { createQuiz, listQuizzes, submitQuiz, addQuestion, getQuizQuestions};
+const fixExistingQuizTasks = catchAsync(async (req: Request, res: Response) => {
+  const result = await QuizServices.fixExistingQuizTasks();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Quiz tasks fixed successfully",
+    data: result,
+  });
+});
+
+export const quizController = { createQuiz, listQuizzes, submitQuiz, addQuestion, getQuizQuestions, updateQuestion, deleteQuestion, fixExistingQuizTasks};

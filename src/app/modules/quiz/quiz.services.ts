@@ -8,6 +8,7 @@ import { Task } from "../task/task.model";
 import { SubmissionServices } from "../submission/submission.services"; // may be unused if you grade here
 import { TaskSubmission } from "../submission/submission.model"; // for creating the mixed submission
 import { GamificationServices } from "../gamification/gamification.service";
+import { any } from "zod";
 
 // ---------- Helpers ----------
 
@@ -91,6 +92,10 @@ const createQuiz = async (
     passMark: payload.passMark || 50,
     questions: [], // Empty initially
   });
+
+  // Update task with quizId reference
+  task.quizId = quiz._id;
+  await task.save();
 
   return { quiz, task };
 };
@@ -299,4 +304,112 @@ const listByUnit = async (taskId: string) => {
   return Quiz.find({ task: taskId, isDeleted: false }).sort({ createdAt: 1 });
 };
 
-export const QuizServices = { createQuiz, submitQuiz, listByUnit, addQuestionToQuiz, getQuizQuestions };
+const updateQuestionToQuiz = async (
+  quizId: string,
+  questionId: string,
+  actor: { userId: string; role: string },
+  question: {
+    type: "mcq" | "short";
+    prompt: string;
+    options?: { text: string; isCorrect?: boolean }[];
+    maxPoints?: number;
+    perCorrectPoint?: number;
+  }
+) => {
+  const quiz = await Quiz.findById(quizId);
+  if (!quiz || quiz.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Quiz Not Found");
+
+  const course = await Course.findById(quiz.course);
+  if (!course) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  // Find and update the question
+  const questionIndex = quiz.questions.findIndex((q:any) => String(q._id) === questionId);
+  if (questionIndex === -1) throw new AppError(httpStatus.NOT_FOUND, "Question Not Found");
+
+  // Validate MCQ options
+  if (question.type === "mcq" && (!question.options || question.options.length < 2)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "MCQ must have at least 2 options");
+  }
+
+  // Update the question
+  quiz.questions[questionIndex] = {
+    ...quiz.questions[questionIndex],
+    type: question.type,
+    prompt: question.prompt,
+    options: question.options || [],
+    maxPoints: question.maxPoints,
+    perCorrectPoint: question.perCorrectPoint,
+  };
+
+  await quiz.save();
+  return quiz;
+};
+
+const deleteQuestionFromQuiz = async (
+  questionId: string,
+  actor: { userId: string; role: string }
+) => {
+  // Find the quiz containing this question
+  const quiz = await Quiz.findOne({ "questions._id": questionId, isDeleted: false });
+  if (!quiz) throw new AppError(httpStatus.NOT_FOUND, "Question Not Found");
+
+  const course = await Course.findById(quiz.course);
+  if (!course) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  // Remove the question from the array
+  quiz.questions = quiz.questions.filter((q: any) => String(q._id) !== questionId);
+  await quiz.save();
+
+  return { message: "Question deleted successfully" };
+};
+
+const fixExistingQuizTasks = async () => {
+  // Find all quiz tasks that don't have quizId set
+  const quizTasksWithoutQuizId = await Task.find({
+    type: "quiz",
+    quizId: { $exists: false },
+    isDeleted: false
+  });
+
+  console.log(`Found ${quizTasksWithoutQuizId.length} quiz tasks without quizId`);
+
+  for (const task of quizTasksWithoutQuizId) {
+    // Check if a quiz already exists for this task
+    const existingQuiz = await Quiz.findOne({
+      task: task._id,
+      isDeleted: false
+    });
+
+    if (existingQuiz) {
+      // Update the task to reference the existing quiz
+      task.quizId = existingQuiz._id;
+      await task.save();
+      console.log(`Updated task ${task._id} with quizId ${existingQuiz._id}`);
+    } else {
+      // Create a new quiz for this task
+      const quiz = await Quiz.create({
+        unit: task.unit,
+        course: task.course,
+        task: task._id,
+        title: task.title,
+        questions: [], // Empty initially
+      });
+
+      task.quizId = quiz._id;
+      await task.save();
+      console.log(`Created quiz ${quiz._id} for task ${task._id}`);
+    }
+  }
+
+  return { message: `Fixed ${quizTasksWithoutQuizId.length} quiz tasks` };
+};
+
+export const QuizServices = { createQuiz, submitQuiz, listByUnit, addQuestionToQuiz, getQuizQuestions, updateQuestionToQuiz, deleteQuestionFromQuiz, fixExistingQuizTasks };

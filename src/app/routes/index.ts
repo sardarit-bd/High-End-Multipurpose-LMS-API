@@ -19,6 +19,7 @@ import { BadgeRoutes } from "../modules/badge/badge.routes";
 import { UploadRoutes } from "../modules/upload/upload.route";
 import { CategoryRoutes } from "../modules/ecom/category/category.routes";
 import { ProductRoutes } from "../modules/ecom/product/product.routes";
+import { DashboardRoutes } from "../modules/dashboard/dashboard.routes";
 
 
 export const router = Router()
@@ -27,6 +28,10 @@ const moduleRoutes = [
     {
         path: '/user',
         route: UserRoutes
+    },
+    {
+        path: '/dashboard',
+        route: DashboardRoutes
     },
     {
         path: '/auth',

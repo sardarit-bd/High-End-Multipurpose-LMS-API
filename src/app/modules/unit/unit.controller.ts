@@ -33,4 +33,20 @@ const listUnits = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const unitController = { createUnit, listUnits };
+const updateUnit = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+  const token = req.user as JwtPayload;
+  const { unitId } = req.params;
+
+  const updated = await UnitServices.updateUnit(unitId, req.body, {
+    userId: token.userId, role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Unit Updated Successfully",
+    data: updated,
+  });
+});
+
+export const unitController = { createUnit, listUnits, updateUnit };

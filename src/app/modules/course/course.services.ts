@@ -72,7 +72,7 @@ const updateCourse = async (
   updates: Partial<ICourse>,
   actor: { userId: string; role: string }
 ) => {
-  const course = await Course.findById(id);
+  const course = await Course.findOne({slug: id});
   if (!course || course.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
 
   const isOwner = String(course.instructor) === String(actor.userId);

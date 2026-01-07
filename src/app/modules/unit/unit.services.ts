@@ -35,4 +35,28 @@ const listUnits = async (courseId: string) => {
         .sort({ orderIndex: 1, createdAt: 1 });
 };
 
-export const UnitServices = { createUnit, listUnits };
+const updateUnit = async (
+    unitId: string,
+    payload: Partial<IUnit>,
+    actor: { userId: string; role: string }
+) => {
+    const unit = await Unit.findById(unitId);
+    if (!unit || unit.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Unit Not Found");
+
+    const course = await Course.findById(unit.course);
+    if (!course || course.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+    const isOwner = String(course.instructor) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN";
+    if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+    const updated = await Unit.findByIdAndUpdate(
+        unitId,
+        { ...payload, updatedAt: new Date() },
+        { new: true }
+    );
+
+    return updated;
+};
+
+export const UnitServices = { createUnit, listUnits, updateUnit };

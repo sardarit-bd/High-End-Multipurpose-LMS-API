@@ -49,5 +49,23 @@ const completeLesson = catchAsync(async (req, res) => {
     message: "Lesson marked as completed",
     data: { courseId, lessonId }
   });
-})
-export const lessonController = { createLesson, listLessons, completeLesson };
+});
+
+const updateLesson = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+  const token = req.user as JwtPayload;
+  const { lessonId } = req.params;
+
+  const updated = await LessonServices.updateLesson(lessonId, req.body, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Lesson Updated Successfully",
+    data: updated,
+  });
+});
+
+export const lessonController = { createLesson, listLessons, completeLesson, updateLesson };

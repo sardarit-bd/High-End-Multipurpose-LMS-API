@@ -3,7 +3,7 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface"; // adjust path if Role lives elsewhere
 import { lessonController } from "./lesson.controller";
-import { createLessonZod } from "./lesson.validation";
+import { createLessonZod, updateLessonZod } from "./lesson.validation";
 
 const router = Router();
 
@@ -25,6 +25,13 @@ router.post(
   "/complete",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
   lessonController.completeLesson
+);
+
+router.put(
+  "/:lessonId",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(updateLessonZod),
+  lessonController.updateLesson
 );
 
 export const LessonRoutes = router;

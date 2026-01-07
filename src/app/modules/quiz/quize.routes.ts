@@ -20,6 +20,18 @@ router.post(
   quizController.addQuestion
 );
 
+router.put(
+  "/update-question/:questionId",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  quizController.updateQuestion
+);
+
+router.delete(
+  "/delete-question/:questionId",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  quizController.deleteQuestion
+);
+
 router.get(
   "/:quizId/questions",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
@@ -38,6 +50,12 @@ router.post(
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
 
   quizController.submitQuiz
+);
+
+router.post(
+  "/fix-existing-tasks",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  quizController.fixExistingQuizTasks
 );
 
 export const QuizRoutes = router;
