@@ -8,15 +8,28 @@ import { createTaskSchema } from "./task.validation";
 
 const router = Router();
 
-/** POST /units/:unitId/tasks (INSTRUCTOR | ADMIN) */
+/** POST /tasks/create (INSTRUCTOR | ADMIN) */
 router.post(
   "/create",
-  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),        // auth required
-//   validateRequest(createTaskSchema),
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
   taskController.createTask
 );
 
-/** GET /units/:unitId/tasks (public) */
+/** PUT /tasks/:id (INSTRUCTOR | ADMIN) */
+router.put(
+  "/:id",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  taskController.updateTask
+);
+
+/** DELETE /tasks/:id (INSTRUCTOR | ADMIN) */
+router.delete(
+  "/:id",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  taskController.deleteTask
+);
+
+/** GET /tasks/:unitId (public) - must be last to avoid conflicts */
 router.get(
   "/:unitId",
   taskController.listTasks

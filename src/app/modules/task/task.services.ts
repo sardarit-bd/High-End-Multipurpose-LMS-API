@@ -54,4 +54,88 @@ const listByUnit = async (unitId: string) => {
   return Task.find({ unit: unitId, isDeleted: false }).sort({ createdAt: 1 }).populate('quizId');
 };
 
-export const TaskServices = { create, listByUnit };
+const update = async (taskId: string, payload: Partial<ITask>, actor: { userId: string; role: string }) => {
+  const task = await Task.findById(taskId);
+  if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
+
+  const course = await Course.findById(task.course);
+  if (!course || course.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  // Store original type to check if it's changing
+  const originalType = task.type;
+  const newType = payload.type !== undefined ? payload.type : task.type;
+
+  // Handle type change: if changing FROM quiz TO something else, delete the quiz
+  if (originalType === "quiz" && newType !== "quiz" && task.quizId) {
+    const quiz = await Quiz.findById(task.quizId);
+    if (quiz && !quiz.isDeleted) {
+      quiz.isDeleted = true;
+      await quiz.save();
+    }
+    task.quizId = null as any; // Clear quizId reference
+  }
+
+  // Handle type change: if changing TO quiz, create a quiz if it doesn't exist
+  if (originalType !== "quiz" && newType === "quiz" && !task.quizId) {
+    const quiz = await Quiz.create({
+      unit: task.unit,
+      course: task.course,
+      task: task._id,
+      title: payload.title || task.title,
+      questions: [], // Empty initially
+    });
+    task.quizId = quiz._id;
+  }
+
+  // If type is quiz and title is being updated, update quiz title too
+  if (newType === "quiz" && payload.title !== undefined && task.quizId) {
+    const quiz = await Quiz.findById(task.quizId);
+    if (quiz && !quiz.isDeleted) {
+      quiz.title = payload.title;
+      await quiz.save();
+    }
+  }
+
+  // Update task fields
+  if (payload.title !== undefined) task.title = payload.title;
+  if (payload.description !== undefined) task.description = payload.description;
+  if (payload.type !== undefined) task.type = payload.type;
+  if (payload.dueDate !== undefined) task.dueDate = payload.dueDate;
+  if (payload.perCorrectPoint !== undefined) task.perCorrectPoint = payload.perCorrectPoint;
+  if (payload.maxPoints !== undefined) task.maxPoints = payload.maxPoints;
+
+  await task.save();
+  return await task.populate('quizId');
+};
+
+const remove = async (taskId: string, actor: { userId: string; role: string }) => {
+  const task = await Task.findById(taskId);
+  if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
+
+  const course = await Course.findById(task.course);
+  if (!course || course.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
+
+  const isOwner = String(course.instructor) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  // If task type is quiz, also delete the associated quiz
+  if (task.type === "quiz" && task.quizId) {
+    const quiz = await Quiz.findById(task.quizId);
+    if (quiz && !quiz.isDeleted) {
+      quiz.isDeleted = true;
+      await quiz.save();
+    }
+  }
+
+  // Soft delete task
+  task.isDeleted = true;
+  await task.save();
+  return task;
+};
+
+export const TaskServices = { create, listByUnit, update, remove };

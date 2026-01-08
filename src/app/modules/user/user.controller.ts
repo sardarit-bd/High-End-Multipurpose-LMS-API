@@ -39,6 +39,7 @@ const getMe = catchAsync(
 const getInstructor = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const {id} = req.params;
+        console.log(req.params)
 
          const user = await UserServices.getInstructor(id);
 

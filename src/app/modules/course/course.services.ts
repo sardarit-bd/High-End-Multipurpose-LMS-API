@@ -4,6 +4,8 @@ import { FilterQuery } from "mongoose";
 import AppError from "../../errorHelpers/AppError";
 import { Course } from "./course.model";
 import { ICourse, ICourseListQuery } from "./course.interface";
+import { Lesson } from "../lesson/lesson.model";
+import { Unit } from "../unit/unit.model";
 
 const createCourse = async (payload: Omit<ICourse, "slug" | "isDeleted">) => {
   const course = await Course.create(payload);
@@ -33,7 +35,11 @@ const listCourses = async (query: any) => {
   if (query.instructor) filter.instructor = query.instructor as any;
 
   // 💰 Free vs Paid filter
-  if (typeof query.isFree === "boolean") {
+  if (query.price === "free") {
+    filter.price = 0;
+  } else if (query.price === "paid") {
+    filter.price = { $gt: 0 };
+  } else if (typeof query.isFree === "boolean") {
     filter.price = query.isFree ? 0 : { $gt: 0 };
   }
 
@@ -54,8 +60,66 @@ const listCourses = async (query: any) => {
     Course.countDocuments(filter),
   ]);
 
+  // Calculate lesson count and duration for each course
+  const itemsWithStats = await Promise.all(
+    items.map(async (course) => {
+      const courseObj = course.toObject();
+      
+      // Get all units for this course
+      const units = await Unit.find({ course: course._id, isDeleted: false }).select('_id');
+      const unitIds = units.map(u => u._id);
+      
+      // Count lessons
+      const lessonCount = await Lesson.countDocuments({
+        unit: { $in: unitIds },
+        isDeleted: false
+      });
+      
+      // Calculate total duration (sum of all lesson durations in seconds)
+      const durationResult = await Lesson.aggregate([
+        {
+          $match: {
+            unit: { $in: unitIds },
+            isDeleted: false,
+            durationSec: { $exists: true, $ne: null }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSeconds: { $sum: "$durationSec" }
+          }
+        }
+      ]);
+      
+      const totalSeconds = durationResult[0]?.totalSeconds || 0;
+      
+      // Format duration
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      let duration = "";
+      if (hours > 0) {
+        duration = `${hours}h`;
+        if (minutes > 0) {
+          duration += ` ${minutes}m`;
+        }
+      } else if (minutes > 0) {
+        duration = `${minutes}m`;
+      } else {
+        duration = "0m";
+      }
+      
+      return {
+        ...courseObj,
+        lessonCount,
+        duration,
+        totalDurationSeconds: totalSeconds
+      };
+    })
+  );
+
   return {
-    items,
+    items: itemsWithStats,
     meta: { page, limit, total, totalPage: Math.ceil(total / limit) },
   };
 };

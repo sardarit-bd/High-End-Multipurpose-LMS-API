@@ -88,21 +88,7 @@ const instructorSchema = new Schema<IInstructor>({
         type: Number,
         default: 0
     },
-    noOfRatting: {
-        type: Number,
-        default: 0
-    },
-    ratting: {
-        type: Number,
-        default: 0
-    },
-    skills: {
-        type: [String]
-    },
-    totalHr: {
-        type: Number,
-        default: 0
-    },
+    description: String,
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User'

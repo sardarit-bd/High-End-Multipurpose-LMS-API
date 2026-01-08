@@ -31,4 +31,30 @@ const listTasks = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const taskController = { createTask, listTasks };
+const updateTask = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const token = req.user as JwtPayload;
+  const updated = await TaskServices.update(id, req.body, { userId: token.userId, role: token.role });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Task updated",
+    data: updated,
+  });
+});
+
+const deleteTask = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const token = req.user as JwtPayload;
+  await TaskServices.remove(id, { userId: token.userId, role: token.role });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Task deleted",
+    data: null,
+  });
+});
+
+export const taskController = { createTask, listTasks, updateTask, deleteTask };

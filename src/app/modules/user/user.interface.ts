@@ -50,11 +50,8 @@ export interface IUser {
 export interface IInstructor {
     _id?: Types.ObjectId,
     noOfCourse?: number,
-    totalHr ?: number,
     enrolledStudent?: number,
-    skills?: string[],
-    ratting?: number,
-    noOfRatting?: number,
+    description?: string,
     designation: string,
     userId: Types.ObjectId 
 }
