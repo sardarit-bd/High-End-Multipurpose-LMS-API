@@ -1,0 +1,311 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OrderServices = void 0;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const http_status_codes_1 = __importDefault(require("http-status-codes"));
+const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
+const order_model_1 = require("./order.model");
+const course_model_1 = require("../course/course.model");
+const product_model_1 = require("../ecom/product/product.model");
+const payment_services_1 = require("../payment/payment.services");
+const mongoose_1 = require("mongoose");
+const gamification_service_1 = require("../gamification/gamification.service");
+const assertAdmin = (actor) => {
+    const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+    if (!isAdmin)
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Admin only");
+};
+const ensureOrder = (orderId) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!mongoose_1.Types.ObjectId.isValid(orderId)) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid order id");
+    }
+    const ord = yield order_model_1.Order.findById(orderId);
+    if (!ord)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Order not found");
+    return ord;
+});
+/** Admin: mark e-commerce order as shipped/processing (sets tracking optionally) */
+const fulfillEcommerceOrder = (orderId, payload, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    assertAdmin(actor);
+    const ord = yield ensureOrder(orderId);
+    if (ord.itemType !== "ecommerce")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only e-commerce orders can be fulfilled");
+    if (ord.status !== "paid")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only paid orders can be fulfilled");
+    // Initialize subdoc if missing
+    ord.ecommerce = ord.ecommerce || {};
+    ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || {};
+    // Update fields
+    ord.ecommerce.fulfillment.status = payload.status;
+    if (payload.trackingNumber)
+        ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
+    if (payload.carrier)
+        ord.ecommerce.fulfillment.carrier = payload.carrier;
+    if (payload.status === "shipped")
+        ord.ecommerce.fulfillment.shippedAt = new Date();
+    yield ord.save();
+    return ord;
+});
+/** Admin: update tracking (optionally bump status to shipped/processing) */
+const updateEcommerceTracking = (orderId, payload, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    assertAdmin(actor);
+    const ord = yield ensureOrder(orderId);
+    if (ord.itemType !== "ecommerce")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only e-commerce orders can be tracked");
+    if (ord.status !== "paid")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only paid orders can be tracked");
+    ord.ecommerce = ord.ecommerce || {};
+    ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || {};
+    ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
+    if (payload.carrier)
+        ord.ecommerce.fulfillment.carrier = payload.carrier;
+    if (payload.status) {
+        ord.ecommerce.fulfillment.status = payload.status;
+        if (payload.status === "shipped")
+            ord.ecommerce.fulfillment.shippedAt = new Date();
+    }
+    yield ord.save();
+    return ord;
+});
+/** Admin: mark delivered (idempotent) */
+const markEcommerceDelivered = (orderId, payload, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    assertAdmin(actor);
+    const ord = yield ensureOrder(orderId);
+    if (ord.itemType !== "ecommerce")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only e-commerce orders can be delivered");
+    if (ord.status !== "paid")
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Only paid orders can be delivered");
+    ord.ecommerce = ord.ecommerce || {};
+    ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || {};
+    // If already delivered, return as-is (idempotent)
+    if (ord.ecommerce.fulfillment.status === "delivered")
+        return ord;
+    ord.ecommerce.fulfillment.status = "delivered";
+    ord.ecommerce.fulfillment.deliveredAt = (payload === null || payload === void 0 ? void 0 : payload.deliveredAt)
+        ? new Date(payload === null || payload === void 0 ? void 0 : payload.deliveredAt)
+        : new Date();
+    yield ord.save();
+    // Optional: tiny bonus points for delivered orders
+    const bonus = Math.max(1, Math.floor((ord.amount || 0) / 100)); // e.g., 1pt per $100
+    if (bonus > 0) {
+        yield gamification_service_1.GamificationServices.addPoints({
+            userId: String(ord.user),
+            points: bonus,
+            sourceType: "purchase",
+            reason: "Order delivered bonus",
+        });
+    }
+    return ord;
+});
+/** Admin: cancel order (stub). If you want refunds, integrate provider’s refund API */
+const cancelOrder = (orderId, payload, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    assertAdmin(actor);
+    const ord = yield ensureOrder(orderId);
+    if (ord.status === "paid") {
+        // Decide your policy. Typically:
+        // 1) Initiate provider refund (Stripe/PayPal) — not implemented here
+        // 2) If restock true and ecommerce, add stock back
+        if (payload.restock && ord.source === "ecommerce" && ((_b = (_a = ord.ecommerce) === null || _a === void 0 ? void 0 : _a.items) === null || _b === void 0 ? void 0 : _b.length)) {
+            for (const it of ord.ecommerce.items) {
+                const prod = yield product_model_1.Product.findById(it.product);
+                if (!prod)
+                    continue;
+                if (it.variantId && Array.isArray(prod.variants)) {
+                    const idx = prod.variants.findIndex((v) => String(v._id) === String(it.variantId));
+                    if (idx >= 0)
+                        prod.variants[idx].stock = (prod.variants[idx].stock || 0) + it.qty;
+                }
+                else {
+                    prod.stock = (prod.stock || 0) + it.qty;
+                }
+                yield prod.save();
+            }
+        }
+    }
+    ord.status = "cancelled";
+    // Optionally record reason somewhere (add a cancellations array if you want audits)
+    yield ord.save();
+    return ord;
+});
+const resolvePrice = (course, couponCode) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    // TODO: add coupon/discount logic here
+    return { price: (_a = course.price) !== null && _a !== void 0 ? _a : 0, currency: (_b = course.currency) !== null && _b !== void 0 ? _b : "USD" };
+});
+/* ----------------------- NORMAL COURSE CHECKOUT ----------------------- */
+const createCheckout = (courseId, userId, provider, itemType, couponCode, billingInfo) => __awaiter(void 0, void 0, void 0, function* () {
+    const course = yield course_model_1.Course.findById(courseId);
+    if (!course || course.isDeleted)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Course Not Found");
+    const { price, currency } = yield resolvePrice(course, couponCode);
+    const order = yield order_model_1.Order.create({
+        user: userId,
+        course: courseId,
+        price,
+        currency,
+        provider,
+        itemType,
+        status: "pending",
+        couponCode,
+        billingInfo
+    });
+    const session = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider,
+        orderId: String(order._id),
+        amount: price * 100,
+        currency,
+        courseId: String(course._id),
+        userId: String(userId),
+        source: itemType,
+    });
+    console.log("Created checkout session:", session);
+    order.providerSessionId = session.sessionId;
+    yield order.save();
+    return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+});
+/* ----------------------- PACKAGE CHECKOUT ----------------------- */
+const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    const order = yield order_model_1.Order.create({
+        user: input.userId,
+        package: { id: input.packageId, name: input.name },
+        courseIds: input.courseIds,
+        price: input.amount,
+        currency: input.currency,
+        provider: "stripe",
+        status: "pending",
+        itemType: "package",
+    });
+    const session = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider: "stripe",
+        orderId: String(order._id),
+        amount: input.amount,
+        currency: input.currency,
+        packageId: input.packageId,
+        userId: input.userId,
+        source: "package",
+    });
+    order.providerSessionId = session.sessionId;
+    yield order.save();
+    return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+});
+const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const items = (_a = input.items) !== null && _a !== void 0 ? _a : [];
+    if (!items.length)
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "No items found to checkout");
+    const verifiedLines = [];
+    for (const line of items) {
+        const prod = yield product_model_1.Product.findById(line.product);
+        if (!prod || !prod.isActive)
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Product not available");
+        let effectivePrice = prod.price;
+        let effectiveStock = prod.stock;
+        if (line.variantId && Array.isArray(prod.variants) && prod.variants.length) {
+            const v = prod.variants.find((vv) => String(vv._id) === String(line.variantId));
+            if (!v)
+                throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Variant not found");
+            effectivePrice = typeof v.price === "number" ? v.price : prod.price;
+            effectiveStock = v.stock;
+        }
+        if (effectiveStock < line.qty) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient stock");
+        }
+        if (line.unitPrice !== effectivePrice) {
+            // Protect from tampered FE prices
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Price mismatch. Refresh page.");
+        }
+        verifiedLines.push({
+            product: prod._id,
+            variantId: line.variantId,
+            qty: line.qty,
+            unitPrice: effectivePrice,
+            title: line.title || prod.title,
+            image: line.image || ((_b = prod.images) === null || _b === void 0 ? void 0 : _b[0]),
+        });
+    }
+    const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+    const discount = 0;
+    const shippingFee = 0;
+    const tax = 0;
+    const total = subtotal - discount + shippingFee + tax;
+    const order = yield order_model_1.Order.create({
+        user: input.userId,
+        provider: "stripe",
+        status: "pending",
+        source: "ecommerce",
+        price: total,
+        itemType: "ecommerce",
+        currency: input.currency || "USD",
+        ecommerce: {
+            items: verifiedLines,
+            subtotal,
+            discount,
+            shippingFee,
+            tax,
+            total,
+            shippingAddress: input.shippingAddress,
+            fulfillment: { status: "unfulfilled" },
+        },
+    });
+    const { sessionId, checkoutUrl } = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider: "stripe",
+        source: "ecommerce",
+        orderId: String(order._id),
+        amount: total,
+        currency: input.currency || "USD",
+        userId: input.userId,
+    });
+    order.providerSessionId = sessionId;
+    yield order.save();
+    return { sessionId, checkoutUrl };
+});
+/* ----------------------- ORDERS FETCHING ----------------------- */
+const getMyOrders = (userId) => __awaiter(void 0, void 0, void 0, function* () { return order_model_1.Order.find({ user: userId, isDeleted: false }).sort({ createdAt: -1 }); });
+const getOrderById = (orderId, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    const ord = yield order_model_1.Order.findById(orderId);
+    if (!ord)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Order Not Found");
+    const isOwner = String(ord.user) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+    if (!(isOwner || isAdmin))
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    return ord;
+});
+const getOrderBySessionId = (sessionId, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    const ord = yield order_model_1.Order.findOne({ providerSessionId: sessionId });
+    if (!ord)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Order Not Found");
+    const isOwner = String(ord.user) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+    if (!(isOwner || isAdmin))
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    return ord;
+});
+const getOrders = () => __awaiter(void 0, void 0, void 0, function* () { return order_model_1.Order.find({ isDeleted: false }).sort({ createdAt: -1 }); });
+/* ----------------------- EXPORT ----------------------- */
+exports.OrderServices = {
+    createCheckout,
+    createCheckoutForPackage,
+    startEcommerceCheckoutFromClient,
+    getMyOrders,
+    getOrderById,
+    getOrderBySessionId,
+    getOrders,
+    fulfillEcommerceOrder,
+    updateEcommerceTracking,
+    markEcommerceDelivered,
+    cancelOrder,
+};

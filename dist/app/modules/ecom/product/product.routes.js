@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProductRoutes = void 0;
+const express_1 = require("express");
+const product_controller_1 = require("./product.controller");
+const checkAuth_1 = require("../../../middlewares/checkAuth");
+const user_interface_1 = require("../../user/user.interface");
+const router = (0, express_1.Router)();
+router.post("/", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), product_controller_1.ProductController.createProduct);
+router.get("/", product_controller_1.ProductController.listProducts);
+router.get("/:slug", product_controller_1.ProductController.getProduct);
+exports.ProductRoutes = router;

@@ -7,25 +7,29 @@ import { UploadController } from "./upload.controller";
 
 const router = Router();
 
-/**
- * ✅ Configure Multer
- * - Destination: temp/ (auto-created if missing)
- * - Keep original extension (helps PDF detection)
- */
-const storage = multer.diskStorage({
-  destination: "temp/",
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
+// ✅ Use memory storage for Vercel (serverless-compatible)
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit (adjust as needed)
+  },
+  fileFilter: (req, file, cb) => {
+    // Optional: Validate file types
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|mp4|mov|avi|doc|docx|ppt|pptx|txt|csv/;
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+
+    if (extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Invalid file type"));
+    }
   },
 });
-const upload = multer({ storage });
 
-/**
- * ✅ Upload API
- * POST /api/v1/uploads
- */
 router.post(
   "/",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),

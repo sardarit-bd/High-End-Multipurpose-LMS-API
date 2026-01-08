@@ -27,5 +27,5 @@ const startServer = async () => {
   await connectRedis()
 })();
 
-
+export default app
 

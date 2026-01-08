@@ -4,12 +4,11 @@
   "description": "",
   "main": "./dist/server.js",
   "scripts": {
+    "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
     "lint": "npx eslint ./src",
-    "build": "tsc && npm run copy:templates",
-    "copy:templates": "copyfiles -u 3 'src/app/utils/template/**/*' dist/app/utils/template",
-    "start": "node ./dist/server.js"
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",

@@ -9,6 +9,7 @@ import { notFound } from "./app/middlewares/notFound";
 import { router } from "./app/routes";
 import "./app/config/passport";
 import { stripeWebhook } from "./app/modules/payment/payment.webhooks.controller";
+import { connectDatabase } from "./app/middlewares/connectDatabase";
 
 const app = express();
 app.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhook);
@@ -34,7 +35,7 @@ app.use(
 );
 
 
-app.use("/api", router);
+app.use("/api", connectDatabase(), router);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({

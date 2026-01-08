@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EnrollmentRoutes = void 0;
+const express_1 = require("express");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const user_interface_1 = require("../user/user.interface");
+const enrollment_controller_1 = require("./enrollment.controller");
+const router = (0, express_1.Router)();
+router.post("/:courseId/enroll", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.enrollSelf);
+router.get("/:courseId/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), enrollment_controller_1.enrollmentController.getMyEnrollment);
+router.get("/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.listMyEnrollments);
+router.get("/courses/:courseId/enrollments", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.listCourseEnrollments);
+router.patch("/courses/:courseId/enrollments/:enrollmentId/status", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.updateStatus);
+router.patch("/courses/:courseId/enrollments/:enrollmentId/progress", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.updateProgress);
+exports.EnrollmentRoutes = router;

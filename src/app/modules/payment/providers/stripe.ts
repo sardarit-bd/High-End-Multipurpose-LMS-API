@@ -8,7 +8,7 @@ export class StripeProvider implements IPaymentProvider {
 
   constructor() {
     this.stripe = new Stripe(envVars.PAYMENT.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-09-30.clover",
+      apiVersion: "2025-10-29.clover",
     });
   }
 
