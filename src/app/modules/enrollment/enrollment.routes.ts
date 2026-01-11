@@ -30,4 +30,16 @@ router.patch("/courses/:courseId/enrollments/:enrollmentId/progress",
     checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
     enrollmentController.updateProgress);
 
+router.post("/courses/:courseId/enrollments/:enrollmentId/complete-lesson",
+    checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
+    enrollmentController.completeLesson);
+
+router.patch("/courses/:courseId/enrollments/:enrollmentId/time-spent",
+    checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
+    enrollmentController.updateTimeSpent);
+
+router.get("/courses/:courseId/points/me",
+    checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+    enrollmentController.getUserCoursePoints);
+
 export const EnrollmentRoutes = router;

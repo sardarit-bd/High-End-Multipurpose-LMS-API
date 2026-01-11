@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -54,6 +87,7 @@ const listCourseEnrollments = (courseId, actor) => __awaiter(void 0, void 0, voi
     return enrollment_model_1.Enrollment.find({ course: courseId, isDeleted: false }).populate("user").sort({ createdAt: -1 });
 });
 const updateStatus = (courseId, enrollmentId, actor, status) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const course = yield ensureCourse(courseId);
     const enrollment = yield enrollment_model_1.Enrollment.findOne({
         _id: enrollmentId,
@@ -71,6 +105,14 @@ const updateStatus = (courseId, enrollmentId, actor, status) => __awaiter(void 0
     if (status === "completed") {
         enrollment.completedAt = new Date();
         enrollment.progress = 100;
+        // Get total points earned in this course
+        const { TaskSubmission } = yield Promise.resolve().then(() => __importStar(require("../submission/submission.model")));
+        const totalPointsResult = yield TaskSubmission.aggregate([
+            { $match: { course: courseId, user: enrollment.user } },
+            { $group: { _id: null, totalPoints: { $sum: "$pointsAwarded" } } }
+        ]);
+        const totalPoints = ((_a = totalPointsResult[0]) === null || _a === void 0 ? void 0 : _a.totalPoints) || 0;
+        console.log(`🎓 Course completed! User ${enrollment.user} earned ${totalPoints} points in course ${courseId}`);
         yield badge_service_1.BadgeServices.autoIssueBadge({
             userId: String(enrollment.user),
             courseId: String(courseId)
@@ -99,6 +141,130 @@ const updateProgress = (courseId, enrollmentId, actor, progress) => __awaiter(vo
     yield enrollment.save();
     return enrollment;
 });
+// Comprehensive progress calculation including lessons, tasks, and quizzes
+const calculateComprehensiveProgress = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const course = yield ensureCourse(courseId);
+    // Get total lessons count
+    const { Lesson } = yield Promise.resolve().then(() => __importStar(require("../lesson/lesson.model")));
+    const totalLessons = yield Lesson.countDocuments({
+        unit: { $in: course.units },
+        isDeleted: false
+    });
+    // Get total tasks count (excluding quizzes since they're handled separately)
+    const { Task } = yield Promise.resolve().then(() => __importStar(require("../task/task.model")));
+    const totalTasks = yield Task.countDocuments({
+        unit: { $in: course.units },
+        type: { $nin: ["quiz"] },
+        isDeleted: false
+    });
+    // Get total quizzes count
+    const totalQuizzes = yield Task.countDocuments({
+        unit: { $in: course.units },
+        type: "quiz",
+        isDeleted: false
+    });
+    // Get enrollment data
+    const enrollment = yield enrollment_model_1.Enrollment.findOne({
+        course: courseId,
+        user: userId,
+        isDeleted: false
+    });
+    const completedLessons = ((_a = enrollment === null || enrollment === void 0 ? void 0 : enrollment.completedLessons) === null || _a === void 0 ? void 0 : _a.length) || 0;
+    // Get submitted tasks count (excluding quizzes)
+    const { TaskSubmission } = yield Promise.resolve().then(() => __importStar(require("../submission/submission.model")));
+    const submittedTasks = yield TaskSubmission.countDocuments({
+        course: courseId,
+        user: userId,
+        type: "task",
+        status: { $in: ["approved", "auto_scored"] }
+    });
+    // Get submitted quizzes count
+    const submittedQuizzes = yield TaskSubmission.countDocuments({
+        course: courseId,
+        user: userId,
+        type: "quiz",
+        status: { $in: ["approved", "auto_scored"] }
+    });
+    // Calculate total items and completed items
+    const totalItems = totalLessons + totalTasks + totalQuizzes;
+    const completedItems = completedLessons + submittedTasks + submittedQuizzes;
+    // Calculate progress percentage
+    const progress = totalItems > 0
+        ? Math.min(100, Math.round((completedItems / totalItems) * 100))
+        : 0;
+    return {
+        progress,
+        breakdown: {
+            lessons: { completed: completedLessons, total: totalLessons },
+            tasks: { completed: submittedTasks, total: totalTasks },
+            quizzes: { completed: submittedQuizzes, total: totalQuizzes }
+        },
+        totalItems,
+        completedItems
+    };
+});
+const completeLesson = (courseId, enrollmentId, actor, lessonId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const course = yield ensureCourse(courseId);
+    const enrollment = yield enrollment_model_1.Enrollment.findOne({ _id: enrollmentId, course: courseId, isDeleted: false });
+    if (!enrollment)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Enrollment Not Found");
+    const isSelf = String(enrollment.user) === String(actor.userId);
+    const isOwner = String(course.instructor) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN";
+    if (!(isSelf || isOwner || isAdmin))
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    // Check if lesson was already completed to avoid duplicate points
+    const wasAlreadyCompleted = (_a = enrollment.completedLessons) === null || _a === void 0 ? void 0 : _a.includes(lessonId);
+    // Add lesson to completed lessons if not already there
+    if (!wasAlreadyCompleted) {
+        enrollment.completedLessons = enrollment.completedLessons || [];
+        enrollment.completedLessons.push(lessonId);
+        // Award points for completing lesson
+        const { GamificationServices } = yield Promise.resolve().then(() => __importStar(require("../gamification/gamification.service")));
+        yield GamificationServices.addPoints({
+            userId: String(enrollment.user),
+            points: 10, // Default points for lesson completion
+            sourceType: "lesson",
+            courseId: courseId,
+            lessonId: lessonId,
+            reason: "Lesson completion"
+        });
+    }
+    // Calculate comprehensive progress including lessons, tasks, and quizzes
+    const progressData = yield calculateComprehensiveProgress(courseId, String(enrollment.user));
+    enrollment.progress = progressData.progress;
+    enrollment.lastActivityAt = new Date();
+    yield enrollment.save();
+    return enrollment;
+});
+const updateTimeSpent = (courseId, enrollmentId, actor, timeSpent) => __awaiter(void 0, void 0, void 0, function* () {
+    const course = yield ensureCourse(courseId);
+    const enrollment = yield enrollment_model_1.Enrollment.findOne({ _id: enrollmentId, course: courseId, isDeleted: false });
+    if (!enrollment)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Enrollment Not Found");
+    const isSelf = String(enrollment.user) === String(actor.userId);
+    const isOwner = String(course.instructor) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN";
+    if (!(isSelf || isOwner || isAdmin))
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    enrollment.timeSpent = (enrollment.timeSpent || 0) + timeSpent;
+    enrollment.lastActivityAt = new Date();
+    yield enrollment.save();
+    return enrollment;
+});
+// Get total points earned by user in a course
+const getUserCoursePoints = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { PointLog } = yield Promise.resolve().then(() => __importStar(require("../gamification/gamification.model")));
+    const result = yield PointLog.aggregate([
+        { $match: { course: courseId, user: userId } },
+        { $group: { _id: null, totalPoints: { $sum: "$points" } } }
+    ]);
+    return ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.totalPoints) || 0;
+});
 exports.EnrollmentServices = {
-    enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress,
+    enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent,
+    calculateComprehensiveProgress, getUserCoursePoints,
 };

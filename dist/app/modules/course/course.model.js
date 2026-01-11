@@ -10,6 +10,7 @@ const CourseSchema = new mongoose_1.Schema({
     level: { type: String, enum: ["beginner", "intermediate", "advanced"], default: "beginner" },
     category: { type: String, index: true },
     thumbnail: { type: String },
+    introVideo: { type: String },
     tags: [{ type: String }],
     instructor: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: ["draft", "published"], default: "draft" },

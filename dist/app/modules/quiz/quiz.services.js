@@ -251,7 +251,7 @@ const listByUnit = (taskId) => __awaiter(void 0, void 0, void 0, function* () {
     const task = yield task_model_1.Task.findById(taskId);
     if (!task || task.isDeleted)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Task Not Found");
-    return quiz_model_1.Quiz.find({ task: taskId, isDeleted: false }).sort({ createdAt: 1 });
+    return quiz_model_1.Quiz.find({ task: taskId, isDeleted: false }).populate('task', 'title type maxPoints').sort({ createdAt: 1 });
 });
 const updateQuestionToQuiz = (quizId, questionId, actor, question) => __awaiter(void 0, void 0, void 0, function* () {
     const quiz = yield quiz_model_1.Quiz.findById(quizId);

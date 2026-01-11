@@ -30,5 +30,19 @@ router.get(
   submissionController.getMyCourseTotal
 );
 
+/** My submissions by unit */
+router.get(
+  "/units/:unitId/me",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.getMySubmissionsByUnit
+);
+
+/** Check if task is submitted by me */
+router.get(
+  "/tasks/:taskId/me",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.getMyTaskSubmission
+);
+
 
 export const SubmissionRoutes = router;

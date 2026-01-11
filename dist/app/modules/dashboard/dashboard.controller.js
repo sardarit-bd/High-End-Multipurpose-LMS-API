@@ -57,9 +57,20 @@ const getCourseStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
         data: stats,
     });
 }));
+const getStudentDashboard = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const dashboardData = yield dashboard_services_1.DashboardServices.getStudentDashboard(token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Student dashboard data fetched successfully",
+        data: dashboardData,
+    });
+}));
 exports.DashboardController = {
     getInstructorDashboard,
     getInstructorStats,
     getEarningsChart,
     getCourseStats,
+    getStudentDashboard,
 };

@@ -137,8 +137,25 @@ const myCourseTotal = (courseId, userId) => __awaiter(void 0, void 0, void 0, fu
     console.log("Aggregation result:", agg);
     return { total: (_b = (_a = agg[0]) === null || _a === void 0 ? void 0 : _a.pointsAwarded) !== null && _b !== void 0 ? _b : 0 };
 });
+const getMySubmissionsByUnit = (unitId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const submissions = yield submission_model_1.TaskSubmission.find({
+        unit: unitId,
+        user: userId,
+    }).populate('task', 'title type').lean();
+    // Return array of submissions (frontend will convert to map if needed)
+    return submissions;
+});
+const getMyTaskSubmission = (taskId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const submission = yield submission_model_1.TaskSubmission.findOne({
+        task: taskId,
+        user: userId,
+    }).populate('task', 'title type maxPoints').lean();
+    return submission;
+});
 exports.SubmissionServices = {
     createReviewedSubmission,
     gradeSubmission,
     myCourseTotal,
+    getMySubmissionsByUnit,
+    getMyTaskSubmission,
 };

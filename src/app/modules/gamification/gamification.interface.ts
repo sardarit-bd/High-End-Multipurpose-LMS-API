@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-export type PointSourceType = "event" | "quiz" | "task" | "manual" | "package" | "purchase" | "enrollment" | "course";
+export type PointSourceType = "event" | "quiz" | "task" | "manual" | "package" | "purchase" | "enrollment" | "course" | "lesson";
 
 export interface IPointLog {
   _id?: Types.ObjectId;
@@ -10,6 +10,7 @@ export interface IPointLog {
   course?: Types.ObjectId;
   event?: Types.ObjectId;
   task?: Types.ObjectId;
+  lesson?: Types.ObjectId;
   reason?: string;
   createdAt?: Date;
 }

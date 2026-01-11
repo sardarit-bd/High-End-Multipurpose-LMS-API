@@ -15,6 +15,7 @@ router.post(
 );
 router.get("/me", checkAuth(...Object.values(Role)), userController.getMe);
 router.get("/instructor/:id", userController.getInstructor)
+router.get("/instructor", userController.getAllInstructors)
 
 router.post(
   "/request-instructor",
@@ -27,5 +28,11 @@ router.patch(
   "/make-instructor",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   userController.approveInstructor
+);
+
+router.patch(
+  "/:id",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN, Role.STUDENT),
+  userController.updateInstructor
 );
 export const UserRoutes = router;

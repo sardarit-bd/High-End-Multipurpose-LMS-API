@@ -301,7 +301,7 @@ const submitQuiz = async (
 const listByUnit = async (taskId: string) => {
   const task = await Task.findById(taskId);
   if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
-  return Quiz.find({ task: taskId, isDeleted: false }).sort({ createdAt: 1 });
+  return Quiz.find({ task: taskId, isDeleted: false }).populate('task', 'title type maxPoints').sort({ createdAt: 1 });
 };
 
 const updateQuestionToQuiz = async (

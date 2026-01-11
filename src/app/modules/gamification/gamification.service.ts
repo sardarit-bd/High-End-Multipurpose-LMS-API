@@ -7,11 +7,12 @@ import { Types } from "mongoose";
 type AwardInput = {
   userId: string;
   points: number;                         // >= 0 for awards
-  sourceType: "event" | "quiz" | "task" | "manual" | "package" | "purchase" | "enrollment" | "course";
+  sourceType: "event" | "quiz" | "task" | "manual" | "package" | "purchase" | "enrollment" | "course" | "lesson";
   reason?: string;
   courseId?: string;
   eventId?: string;
   taskId?: string;
+  lessonId?: string;
 };
 
 const addPoints = async (input: AwardInput) => {
@@ -25,6 +26,7 @@ const addPoints = async (input: AwardInput) => {
     course: input.courseId ? new Types.ObjectId(input.courseId) : undefined,
     event: input.eventId ? new Types.ObjectId(input.eventId) : undefined,
     task: input.taskId ? new Types.ObjectId(input.taskId) : undefined,
+    lesson: input.lessonId ? new Types.ObjectId(input.lessonId) : undefined,
     reason: input.reason
   });
 

@@ -9,6 +9,7 @@ const CourseSchema = new Schema<ICourse>(
     level: { type: String, enum: ["beginner", "intermediate", "advanced"], default: "beginner" },
     category: { type: String, index: true },
     thumbnail: { type: String },
+    introVideo: { type: String },
     tags: [{ type: String }],
 
     instructor: { type: Schema.Types.ObjectId, ref: "User", required: true },

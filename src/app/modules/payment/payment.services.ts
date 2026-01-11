@@ -35,14 +35,35 @@ const markPaidFromWebhook = async (
     courseId?: string;
   }
 ) => {
+  console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
+
   // Validate order existence
   const order = await Order.findById(normalized.orderId);
-  if (!order) throw new AppError(httpStatus.NOT_FOUND, "Order Not Found");
+  if (!order) {
+    console.error(`❌ Order not found: ${normalized.orderId}`);
+    throw new AppError(httpStatus.NOT_FOUND, `Order not found: ${normalized.orderId}`);
+  }
 
   // Prevent cross-user tampering
   if (String(order.user) !== normalized.userId) {
+    console.error(`❌ Order user mismatch - Order user: ${order.user}, Webhook user: ${normalized.userId}`);
     throw new AppError(httpStatus.BAD_REQUEST, "Order does not belong to this user");
   }
+
+  // Check if order is already paid (idempotent)
+  if (order.status === "paid") {
+    console.log(`⚠️ Order ${normalized.orderId} already marked as paid, skipping`);
+    return order;
+  }
+
+  // Validate payment amount (for Stripe, amount is in cents)
+  const expectedAmount = provider === "stripe" ? order.price * 100 : order.price;
+  if (Math.abs(normalized.amount - expectedAmount) > 1) { // Allow 1 cent/unit difference for rounding
+    console.error(`❌ Amount mismatch - Expected: ${expectedAmount}, Received: ${normalized.amount}`);
+    throw new AppError(httpStatus.BAD_REQUEST, "Payment amount does not match order amount");
+  }
+
+  console.log(`✅ Amount validation passed - Expected: ${expectedAmount}, Received: ${normalized.amount}`);
 
   // Mark order as paid (idempotent update)
   order.providerPaymentId = normalized.providerPaymentId;

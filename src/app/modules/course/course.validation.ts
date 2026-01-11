@@ -14,7 +14,8 @@ export const createCourseZodSchema = z.object({
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "published"]).optional(),
   scoring: scoringZ.optional(),
-  awardOnComplete: z.string().optional()
+  awardOnComplete: z.string().optional(),
+  introVideo: z.string().url().optional()
 });
 
 export const updateCourseZodSchema = z.object({

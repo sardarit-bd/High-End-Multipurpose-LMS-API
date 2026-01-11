@@ -145,10 +145,30 @@ const myCourseTotal = async (courseId: string, userId: string) => {
   return { total: agg[0]?.pointsAwarded ?? 0 };
 };
 
+const getMySubmissionsByUnit = async (unitId: string, userId: string) => {
+  const submissions = await TaskSubmission.find({
+    unit: unitId,
+    user: userId,
+  }).populate('task', 'title type').lean();
+
+  // Return array of submissions (frontend will convert to map if needed)
+  return submissions;
+};
+
+const getMyTaskSubmission = async (taskId: string, userId: string) => {
+  const submission = await TaskSubmission.findOne({
+    task: taskId,
+    user: userId,
+  }).populate('task', 'title type maxPoints').lean();
+
+  return submission;
+};
 
 
 export const SubmissionServices = {
   createReviewedSubmission,
   gradeSubmission,
   myCourseTotal,
+  getMySubmissionsByUnit,
+  getMyTaskSubmission,
 };

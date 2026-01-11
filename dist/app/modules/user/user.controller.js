@@ -18,7 +18,6 @@ const user_services_1 = require("./user.services");
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
 const createUser = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Request body in controller:", req.body);
     const user = yield user_services_1.UserServices.createUser(req.body);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.CREATED,
@@ -39,13 +38,21 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0,
 }));
 const getInstructor = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    console.log(req.params);
     const user = yield user_services_1.UserServices.getInstructor(id);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.CREATED,
         success: true,
         message: "Instructor is fetched Successfully",
         data: user,
+    });
+}));
+const getAllInstructors = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const instructors = yield user_services_1.UserServices.getAllInstructors(req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Instructors fetched Successfully",
+        data: instructors,
     });
 }));
 const requestInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -74,10 +81,25 @@ const approveInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(v
         data: user,
     });
 }));
+const updateInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const updated = yield user_services_1.UserServices.updateInstructor(req.params.id, req.body, {
+        userId: token.userId,
+        role: token.role,
+    });
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Profile Updated Successfully",
+        data: updated,
+    });
+}));
 exports.userController = {
     createUser,
     getMe,
     requestInstructor,
     approveInstructor,
-    getInstructor
+    getInstructor,
+    getAllInstructors,
+    updateInstructor
 };

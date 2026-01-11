@@ -12,8 +12,15 @@ import { stripeWebhook } from "./app/modules/payment/payment.webhooks.controller
 import { connectDatabase } from "./app/middlewares/connectDatabase";
 
 const app = express();
-app.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhook);
 
+// CRITICAL: Webhook routes MUST be defined BEFORE any body parsing middleware
+// Stripe needs the raw request body for signature verification
+app.post("/webhooks/stripe", express.raw({ type: "application/json", verify: (req, res, buf) => {
+  // Store raw body for Stripe signature verification
+  (req as any).rawBody = buf;
+} }), stripeWebhook);
+
+// Now apply all other middleware AFTER webhook routes
 app.use(
   expressSession({
     secret: envVars.EXPRESS_SESSION_SECRET,

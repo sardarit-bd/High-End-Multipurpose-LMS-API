@@ -53,6 +53,14 @@ const userSchema = new mongoose_1.Schema({
     address: {
         type: String
     },
+    socialLinks: {
+        facebook: { type: String },
+        twitter: { type: String },
+        linkedin: { type: String },
+        instagram: { type: String },
+        github: { type: String },
+        website: { type: String }
+    },
     organization: { type: String },
     region: { type: String },
     isDeleted: {
@@ -85,7 +93,8 @@ const instructorSchema = new mongoose_1.Schema({
         type: Number,
         default: 0
     },
-    description: String,
+    certifications: [String],
+    expertise: [String],
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User'

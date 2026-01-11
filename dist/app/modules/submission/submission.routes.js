@@ -16,4 +16,8 @@ router.patch("/task/grade", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INS
 submission_controller_1.submissionController.gradeSubmission);
 /** My total for a course */
 router.get("/:courseId/points/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMyCourseTotal);
+/** My submissions by unit */
+router.get("/units/:unitId/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMySubmissionsByUnit);
+/** Check if task is submitted by me */
+router.get("/tasks/:taskId/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMyTaskSubmission);
 exports.SubmissionRoutes = router;

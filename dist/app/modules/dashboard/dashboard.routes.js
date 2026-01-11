@@ -14,4 +14,6 @@ router.get("/stats", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR
 router.get("/earnings-chart", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR), dashboard_controller_1.DashboardController.getEarningsChart);
 /** GET /dashboard/course-stats/:instructorId — INSTRUCTOR only */
 router.get("/course-stats/:instructorId", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR), dashboard_controller_1.DashboardController.getCourseStats);
+/** GET /dashboard/student — STUDENT only */
+router.get("/student", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT), dashboard_controller_1.DashboardController.getStudentDashboard);
 exports.DashboardRoutes = router;

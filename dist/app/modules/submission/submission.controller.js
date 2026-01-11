@@ -50,8 +50,32 @@ const getMyCourseTotal = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
         data: total,
     });
 }));
+const getMySubmissionsByUnit = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const { unitId } = req.params;
+    const submissions = yield submission_services_1.SubmissionServices.getMySubmissionsByUnit(unitId, token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "My submissions for unit",
+        data: submissions,
+    });
+}));
+const getMyTaskSubmission = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const { taskId } = req.params;
+    const submission = yield submission_services_1.SubmissionServices.getMyTaskSubmission(taskId, token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "My task submission",
+        data: submission,
+    });
+}));
 exports.submissionController = {
     createReviewedSubmission,
     gradeSubmission,
-    getMyCourseTotal
+    getMyCourseTotal,
+    getMySubmissionsByUnit,
+    getMyTaskSubmission
 };

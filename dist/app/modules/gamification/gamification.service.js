@@ -29,6 +29,7 @@ const addPoints = (input) => __awaiter(void 0, void 0, void 0, function* () {
         course: input.courseId ? new mongoose_1.Types.ObjectId(input.courseId) : undefined,
         event: input.eventId ? new mongoose_1.Types.ObjectId(input.eventId) : undefined,
         task: input.taskId ? new mongoose_1.Types.ObjectId(input.taskId) : undefined,
+        lesson: input.lessonId ? new mongoose_1.Types.ObjectId(input.lessonId) : undefined,
         reason: input.reason
     });
     // 2) Upsert wallet

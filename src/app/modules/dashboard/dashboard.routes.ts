@@ -33,4 +33,11 @@ router.get(
   DashboardController.getCourseStats
 );
 
+/** GET /dashboard/student — STUDENT only */
+router.get(
+  "/student",
+  checkAuth(Role.STUDENT),
+  DashboardController.getStudentDashboard
+);
+
 export const DashboardRoutes = router;

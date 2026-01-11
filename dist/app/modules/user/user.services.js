@@ -59,12 +59,42 @@ const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return user;
 });
-const getInstructor = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const instructor = yield user_model_1.Instructor.findOne({ userId }).populate('userId', 'name email picture intro');
+const getInstructor = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    // Try to find instructor by userId first, then by instructor document _id if not found
+    let instructor = yield user_model_1.Instructor.findOne({ userId: id }).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified');
+    // If not found by userId, try finding by instructor document _id
+    if (!instructor) {
+        instructor = yield user_model_1.Instructor.findById(id).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified');
+    }
     if (!instructor) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Instructor Not Found");
     }
     return instructor;
+});
+const getAllInstructors = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
+    const { q, page = 1, limit = 10 } = query;
+    // Build filter for instructors
+    const filter = {};
+    // If search query provided, search in user name or instructor designation
+    if (q) {
+        filter.$or = [
+            { 'userId.name': { $regex: q, $options: 'i' } },
+            { designation: { $regex: q, $options: 'i' } },
+            { 'userId.email': { $regex: q, $options: 'i' } }
+        ];
+    }
+    const instructors = yield user_model_1.Instructor.find(filter)
+        .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+        .sort({ createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+    const total = yield user_model_1.Instructor.countDocuments(filter);
+    return {
+        instructors,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+    };
 });
 const requestInstructor = (userId, note) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -119,10 +149,27 @@ const approveInstructor = (targetUserId, actor, payload) => __awaiter(void 0, vo
     delete obj.password;
     return obj;
 });
+const updateInstructor = (id, updates, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    const instructor = yield user_model_1.Instructor.findOne({ userId: id });
+    const user = yield user_model_1.User.findById(id);
+    if (!instructor || !user)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Instructor Not Found");
+    const isOwner = String(instructor.userId) === String(actor.userId);
+    const isAdmin = actor.role === "ADMIN";
+    if (!isOwner && !isAdmin)
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    Object.assign(instructor, updates);
+    yield instructor.save();
+    Object.assign(user, updates);
+    yield user.save();
+    return instructor;
+});
 exports.UserServices = {
     getMe,
     createUser,
     requestInstructor,
     approveInstructor,
-    getInstructor
+    getInstructor,
+    getAllInstructors,
+    updateInstructor
 };

@@ -7,6 +7,7 @@ import { UnitRoutes } from "../modules/unit/unit.routes";
 import { LessonRoutes } from "../modules/lesson/lesson.routes";
 import { TaskRoutes } from "../modules/task/task.routes";
 import { SubmissionRoutes } from "../modules/submission/submission.routes";
+import { CertificateRoutes } from "../modules/certificate/certificate.routes";
 import { QuizRoutes } from "../modules/quiz/quize.routes";
 import { path } from "pdfkit";
 import { EnrollmentRoutes } from "../modules/enrollment/enrollment.routes";
@@ -60,6 +61,10 @@ const moduleRoutes = [
     {
         path: '/submissions',
         route: SubmissionRoutes
+    },
+    {
+        path: '/certificates',
+        route: CertificateRoutes
     },
     {
         path: '/quizzes',

@@ -1,5 +1,5 @@
 import AppError from "../../errorHelpers/AppError";
-import { IAuthProvider, IUser, Role } from "./user.interface";
+import { IAuthProvider, IInstructor, IUser, Role } from "./user.interface";
 import { Instructor, User } from "./user.model";
 import httpStatus from 'http-status-codes'
 import bcryptjs from 'bcryptjs';
@@ -51,14 +51,51 @@ const getMe = async (userId: string) => {
   return user;
 };
 
-const getInstructor = async (userId: string) => {
-  const instructor = await Instructor.findOne({userId}).populate('userId', 'name email picture intro')
+const getInstructor = async (id: string) => {
+  // Try to find instructor by userId first, then by instructor document _id if not found
+  let instructor = await Instructor.findOne({userId: id}).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+
+  // If not found by userId, try finding by instructor document _id
+  if (!instructor) {
+    instructor = await Instructor.findById(id).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+  }
 
   if (!instructor) {
     throw new AppError(httpStatus.NOT_FOUND, "Instructor Not Found");
   }
 
   return instructor;
+};
+
+const getAllInstructors = async (query: any = {}) => {
+  const { q, page = 1, limit = 10 } = query;
+
+  // Build filter for instructors
+  const filter: any = {};
+
+  // If search query provided, search in user name or instructor designation
+  if (q) {
+    filter.$or = [
+      { 'userId.name': { $regex: q, $options: 'i' } },
+      { designation: { $regex: q, $options: 'i' } },
+      { 'userId.email': { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  const instructors = await Instructor.find(filter)
+    .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+    .sort({ createdAt: -1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit);
+
+  const total = await Instructor.countDocuments(filter);
+
+  return {
+    instructors,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit)
+  };
 };
 
 const requestInstructor = async (userId: string, note?: string) => {
@@ -124,10 +161,35 @@ const approveInstructor = async (
 };
 
 
+
+const updateInstructor = async (
+  id: string,
+  updates: Partial<IInstructor & IUser>,
+  actor: { userId: string; role: string }
+) => {
+  const instructor = await Instructor.findOne({userId: id});
+  const user = await User.findById(id);
+  if (!instructor || !user) throw new AppError(httpStatus.NOT_FOUND, "Instructor Not Found");
+
+  const isOwner = String(instructor.userId) === String(actor.userId);
+  const isAdmin = actor.role === "ADMIN";
+  if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+
+  Object.assign(instructor, updates);
+  await instructor.save();
+
+  Object.assign(user, updates);
+  await user.save();
+
+  return instructor;
+};
+
 export const UserServices = {
     getMe,
     createUser,
     requestInstructor,
     approveInstructor,
-    getInstructor
+    getInstructor,
+    getAllInstructors,
+    updateInstructor
 };

@@ -23,7 +23,7 @@ class StripeProvider {
     }
     createCheckoutSession(input) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c;
             const params = {
                 payment_method_types: ["card"],
                 mode: "payment",
@@ -43,13 +43,13 @@ class StripeProvider {
                 success_url: `${env_1.envVars.PAYMENT.STRIPE_SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
                 cancel_url: env_1.envVars.PAYMENT.STRIPE_CANCEL_URL,
                 metadata: {
-                    orderId: (_c = input.orderId) !== null && _c !== void 0 ? _c : null,
-                    userId: (_d = input.userId) !== null && _d !== void 0 ? _d : null,
-                    courseId: (_e = input.courseId) !== null && _e !== void 0 ? _e : null,
+                    orderId: input.orderId || "",
+                    userId: input.userId || "",
+                    courseId: input.courseId || "",
                 },
             };
             const session = yield this.stripe.checkout.sessions.create(params);
-            return { sessionId: session.id, checkoutUrl: (_f = session.url) !== null && _f !== void 0 ? _f : null };
+            return { sessionId: session.id, checkoutUrl: (_c = session.url) !== null && _c !== void 0 ? _c : null };
         });
     }
 }

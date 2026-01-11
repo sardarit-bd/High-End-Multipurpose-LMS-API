@@ -45,13 +45,23 @@ export interface IUser {
     auths: IAuthProvider[],
     createdAt?: Date,
     instructorRequest?: IInstructorRequest;
+    socialLinks?: {
+        facebook?: string;
+        twitter?: string;
+        linkedin?: string;
+        instagram?: string;
+        github?: string;
+        website?: string;
+    }
 }
 
 export interface IInstructor {
     _id?: Types.ObjectId,
     noOfCourse?: number,
     enrolledStudent?: number,
-    description?: string,
     designation: string,
-    userId: Types.ObjectId 
+    userId: Types.ObjectId,
+
+    certifications?: string[],
+    expertise?: string[],
 }

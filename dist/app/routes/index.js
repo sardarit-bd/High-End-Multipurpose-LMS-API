@@ -10,6 +10,7 @@ const unit_routes_1 = require("../modules/unit/unit.routes");
 const lesson_routes_1 = require("../modules/lesson/lesson.routes");
 const task_routes_1 = require("../modules/task/task.routes");
 const submission_routes_1 = require("../modules/submission/submission.routes");
+const certificate_routes_1 = require("../modules/certificate/certificate.routes");
 const quize_routes_1 = require("../modules/quiz/quize.routes");
 const enrollment_routes_1 = require("../modules/enrollment/enrollment.routes");
 const order_routes_1 = require("../modules/order/order.routes");
@@ -59,6 +60,10 @@ const moduleRoutes = [
     {
         path: '/submissions',
         route: submission_routes_1.SubmissionRoutes
+    },
+    {
+        path: '/certificates',
+        route: certificate_routes_1.CertificateRoutes
     },
     {
         path: '/quizzes',

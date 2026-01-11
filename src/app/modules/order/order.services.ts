@@ -184,6 +184,45 @@ const createCheckout = async (
 
   const { price, currency } = await resolvePrice(course, couponCode);
 
+  // Handle free courses - auto-complete order and enroll
+  if (price === 0) {
+    const order = await Order.create({
+      user: userId,
+      course: courseId,
+      price,
+      currency,
+      provider: "free", // Special provider for free courses
+      itemType,
+      status: "completed", // Mark as completed immediately
+      couponCode,
+      billingInfo
+    });
+
+    // Auto-enroll the user in the free course
+    const { EnrollmentServices } = await import('../enrollment/enrollment.services');
+    await EnrollmentServices.enrollSelf(courseId, userId);
+
+    // Award enrollment points for free course
+    const { GamificationServices } = await import('../gamification/gamification.service');
+    await GamificationServices.addPoints({
+      userId,
+      points: 20,
+      sourceType: "enrollment",
+      courseId: courseId,
+      reason: "Free course enrollment",
+    });
+
+    console.log("Free course enrolled automatically:", { courseId, userId, orderId: order._id });
+
+    return {
+      orderId: String(order._id),
+      checkoutUrl: null, // No payment URL needed for free courses
+      isFree: true,
+      message: "Enrolled successfully in free course!"
+    };
+  }
+
+  // Handle paid courses - create payment session
   const order = await Order.create({
     user: userId,
     course: courseId,

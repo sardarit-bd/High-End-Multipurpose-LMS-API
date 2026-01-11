@@ -9,7 +9,6 @@ import { IUser } from "./user.interface";
 
 const createUser = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      console.log("Request body in controller:", req.body);
         const user = await UserServices.createUser(req.body);
 
         sendResponse<IUser>(res, {
@@ -39,7 +38,6 @@ const getMe = catchAsync(
 const getInstructor = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const {id} = req.params;
-        console.log(req.params)
 
          const user = await UserServices.getInstructor(id);
 
@@ -48,6 +46,19 @@ const getInstructor = catchAsync(
             success: true,
             message: "Instructor is fetched Successfully",
             data: user,
+        });
+    }
+);
+
+const getAllInstructors = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const instructors = await UserServices.getAllInstructors(req.query);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Instructors fetched Successfully",
+            data: instructors,
         });
     }
 );
@@ -80,10 +91,29 @@ const approveInstructor = catchAsync(async (req: Request, res: Response) => {
     data: user,
   });
 });
+
+
+const updateInstructor = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  
+  const updated = await UserServices.updateInstructor(req.params.id, req.body, {
+    userId: token.userId,
+    role: token.role,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Profile Updated Successfully",
+    data: updated,
+  });
+});
 export const userController = {
     createUser,
     getMe,
     requestInstructor,
     approveInstructor,
-    getInstructor
+    getInstructor,
+    getAllInstructors,
+    updateInstructor
 };

@@ -20,6 +20,7 @@ export interface ICourse {
   isDeleted?: boolean;
 
   awardOnComplete?: Types.ObjectId;
+  introVideo?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

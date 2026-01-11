@@ -16,7 +16,13 @@ require("./app/config/passport");
 const payment_webhooks_controller_1 = require("./app/modules/payment/payment.webhooks.controller");
 const connectDatabase_1 = require("./app/middlewares/connectDatabase");
 const app = (0, express_1.default)();
-app.post("/webhooks/stripe", express_1.default.raw({ type: "application/json" }), payment_webhooks_controller_1.stripeWebhook);
+// CRITICAL: Webhook routes MUST be defined BEFORE any body parsing middleware
+// Stripe needs the raw request body for signature verification
+app.post("/webhooks/stripe", express_1.default.raw({ type: "application/json", verify: (req, res, buf) => {
+        // Store raw body for Stripe signature verification
+        req.rawBody = buf;
+    } }), payment_webhooks_controller_1.stripeWebhook);
+// Now apply all other middleware AFTER webhook routes
 app.use((0, express_session_1.default)({
     secret: env_1.envVars.EXPRESS_SESSION_SECRET,
     resave: false,

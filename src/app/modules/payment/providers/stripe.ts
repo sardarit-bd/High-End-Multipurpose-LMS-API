@@ -32,9 +32,9 @@ export class StripeProvider implements IPaymentProvider {
       success_url: `${envVars.PAYMENT.STRIPE_SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: envVars.PAYMENT.STRIPE_CANCEL_URL,
       metadata: {
-        orderId: input.orderId ?? null,
-        userId: input.userId ?? null,
-        courseId: input.courseId ?? null,
+        orderId: input.orderId || "",
+        userId: input.userId || "",
+        courseId: input.courseId || "",
       },
     };
 

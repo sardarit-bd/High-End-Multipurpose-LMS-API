@@ -7,6 +7,9 @@ const EnrollmentSchema = new mongoose_1.Schema({
     course: { type: mongoose_1.Schema.Types.ObjectId, ref: "Course", required: true, index: true },
     status: { type: String, enum: ["enrolled", "completed", "dropped"], default: "enrolled" },
     progress: { type: Number, min: 0, max: 100, default: 0 },
+    completedLessons: [{ type: String }], // Array of lesson IDs that are completed
+    timeSpent: { type: Number, default: 0 }, // Time spent in seconds
+    streak: { type: Number, default: 0 }, // Current learning streak in days
     startedAt: { type: Date },
     completedAt: { type: Date },
     lastActivityAt: { type: Date },

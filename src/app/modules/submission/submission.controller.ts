@@ -53,10 +53,40 @@ const getMyCourseTotal = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMySubmissionsByUnit = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { unitId } = req.params;
+
+  const submissions = await SubmissionServices.getMySubmissionsByUnit(unitId, token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My submissions for unit",
+    data: submissions,
+  });
+});
+
+const getMyTaskSubmission = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { taskId } = req.params;
+
+  const submission = await SubmissionServices.getMyTaskSubmission(taskId, token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My task submission",
+    data: submission,
+  });
+});
+
 
 
 export const submissionController = {
   createReviewedSubmission,
   gradeSubmission,
-  getMyCourseTotal
+  getMyCourseTotal,
+  getMySubmissionsByUnit,
+  getMyTaskSubmission
 };

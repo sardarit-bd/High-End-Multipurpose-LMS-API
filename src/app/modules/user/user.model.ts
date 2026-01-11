@@ -53,6 +53,14 @@ const userSchema = new Schema<IUser>({
     address: {
         type: String
     },
+    socialLinks: {
+        facebook: { type: String },
+        twitter: { type: String },
+        linkedin: { type: String },
+        instagram: { type: String },
+        github: { type: String },
+        website: { type: String }
+    },
     organization: { type: String },
     region: { type: String },
     isDeleted: {
@@ -88,7 +96,8 @@ const instructorSchema = new Schema<IInstructor>({
         type: Number,
         default: 0
     },
-    description: String,
+    certifications: [String],
+    expertise: [String],
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User'

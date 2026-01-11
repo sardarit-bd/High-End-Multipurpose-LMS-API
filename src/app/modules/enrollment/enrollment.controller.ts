@@ -47,4 +47,27 @@ const updateProgress = catchAsync(async (req, res) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Progress updated", data: doc });
 });
 
-export const enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress };
+const completeLesson = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  const { courseId, enrollmentId } = req.params;
+  const { lessonId } = req.body;
+  const doc = await EnrollmentServices.completeLesson(courseId, enrollmentId, { userId: token.userId, role: token.role }, lessonId);
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Lesson completed", data: doc });
+});
+
+const updateTimeSpent = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  const { courseId, enrollmentId } = req.params;
+  const { timeSpent } = req.body;
+  const doc = await EnrollmentServices.updateTimeSpent(courseId, enrollmentId, { userId: token.userId, role: token.role }, timeSpent);
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Time spent updated", data: doc });
+});
+
+const getUserCoursePoints = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  const { courseId } = req.params;
+  const points = await EnrollmentServices.getUserCoursePoints(courseId, token.userId);
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "User course points", data: { points } });
+});
+
+export const enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent, getUserCoursePoints };

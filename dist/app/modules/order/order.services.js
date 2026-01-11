@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -151,6 +184,40 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
     if (!course || course.isDeleted)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Course Not Found");
     const { price, currency } = yield resolvePrice(course, couponCode);
+    // Handle free courses - auto-complete order and enroll
+    if (price === 0) {
+        const order = yield order_model_1.Order.create({
+            user: userId,
+            course: courseId,
+            price,
+            currency,
+            provider: "free", // Special provider for free courses
+            itemType,
+            status: "completed", // Mark as completed immediately
+            couponCode,
+            billingInfo
+        });
+        // Auto-enroll the user in the free course
+        const { EnrollmentServices } = yield Promise.resolve().then(() => __importStar(require('../enrollment/enrollment.services')));
+        yield EnrollmentServices.enrollSelf(courseId, userId);
+        // Award enrollment points for free course
+        const { GamificationServices } = yield Promise.resolve().then(() => __importStar(require('../gamification/gamification.service')));
+        yield GamificationServices.addPoints({
+            userId,
+            points: 20,
+            sourceType: "enrollment",
+            courseId: courseId,
+            reason: "Free course enrollment",
+        });
+        console.log("Free course enrolled automatically:", { courseId, userId, orderId: order._id });
+        return {
+            orderId: String(order._id),
+            checkoutUrl: null, // No payment URL needed for free courses
+            isFree: true,
+            message: "Enrolled successfully in free course!"
+        };
+    }
+    // Handle paid courses - create payment session
     const order = yield order_model_1.Order.create({
         user: userId,
         course: courseId,
