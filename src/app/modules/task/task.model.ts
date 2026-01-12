@@ -9,8 +9,7 @@ const TaskSchema = new Schema<ITask>(
     description: { type: String, default: "" },
     type:   { type: String, enum: ["quiz","video","pdf"], required: true },
 
-    perCorrectPoint: { type: Number },          // quiz
-    maxPoints:       { type: Number },          // cap for any type
+    maxPoints:       { type: Number },          // cap for video/pdf types
 
     dueDate: {type: Date},
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz" }, // when type === "quiz"

@@ -6,7 +6,7 @@ import { Course } from "../course/course.model";
 import { Quiz } from "../quiz/quiz.model";
 import { ITask } from "./task.interface";
 
-const create = async (unitId: string, payload: Omit<ITask, "unit"|"course"|"isDeleted">, actor: { userId: string; role: string }) => {
+const create = async (unitId: string, payload: Omit<ITask, "unit"|"course"|"isDeleted"|"perCorrectPoint">, actor: { userId: string; role: string }) => {
   const unit = await Unit.findById(unitId);
   if (!unit || unit.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Unit Not Found");
 
@@ -24,7 +24,6 @@ const create = async (unitId: string, payload: Omit<ITask, "unit"|"course"|"isDe
     title: payload.title,
     type: payload.type,
     description: payload.description,
-    perCorrectPoint: payload.perCorrectPoint,
     maxPoints: payload.maxPoints,
     quizId: payload.quizId,
     dueDate: payload.dueDate
@@ -105,7 +104,6 @@ const update = async (taskId: string, payload: Partial<ITask>, actor: { userId: 
   if (payload.description !== undefined) task.description = payload.description;
   if (payload.type !== undefined) task.type = payload.type;
   if (payload.dueDate !== undefined) task.dueDate = payload.dueDate;
-  if (payload.perCorrectPoint !== undefined) task.perCorrectPoint = payload.perCorrectPoint;
   if (payload.maxPoints !== undefined) task.maxPoints = payload.maxPoints;
 
   await task.save();

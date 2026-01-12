@@ -20,6 +20,12 @@ app.post("/webhooks/stripe", express.raw({ type: "application/json", verify: (re
   (req as any).rawBody = buf;
 } }), stripeWebhook);
 
+app.get("/webhooks/stripe", (req: Request, res: Response) => {
+  res.status(200).json({
+    message: "I am from stripe webhook GET endpoint",
+  });
+});
+
 // Now apply all other middleware AFTER webhook routes
 app.use(
   expressSession({

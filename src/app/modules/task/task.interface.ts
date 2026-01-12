@@ -12,8 +12,7 @@ export interface ITask {
     dueDate: Date;
 
     // Scoring config by type
-    perCorrectPoint?: number;       // quiz only
-    maxPoints?: number;             // optional caps (quiz/video/pdf)
+    maxPoints?: number;             // optional caps (video/pdf only - hidden for quiz)
 
     // Link to quiz (if you keep quizzes in separate module)
     quizId?: Types.ObjectId;        // required when type === "quiz"

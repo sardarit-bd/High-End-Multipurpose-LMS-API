@@ -22,6 +22,11 @@ app.post("/webhooks/stripe", express_1.default.raw({ type: "application/json", v
         // Store raw body for Stripe signature verification
         req.rawBody = buf;
     } }), payment_webhooks_controller_1.stripeWebhook);
+app.get("/webhooks/stripe", (req, res) => {
+    res.status(200).json({
+        message: "I am from stripe webhook GET endpoint",
+    });
+});
 // Now apply all other middleware AFTER webhook routes
 app.use((0, express_session_1.default)({
     secret: env_1.envVars.EXPRESS_SESSION_SECRET,
