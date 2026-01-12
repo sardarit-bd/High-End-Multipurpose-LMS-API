@@ -75,7 +75,6 @@ const createQuiz = (unitId, payload, actor) => __awaiter(void 0, void 0, void 0,
         course: course._id,
         title: payload.title,
         type: "quiz",
-        perCorrectPoint: payload.perCorrectPoint || 1,
         maxPoints: payload.maxPoints,
     });
     // Create Quiz shell (no questions yet)
@@ -112,7 +111,6 @@ const addQuestionToQuiz = (quizId, actor, question) => __awaiter(void 0, void 0,
         type: question.type,
         prompt: question.prompt,
         options: question.options || [],
-        maxPoints: question.maxPoints,
         perCorrectPoint: question.perCorrectPoint,
     });
     yield quiz.save();
@@ -183,31 +181,32 @@ const submitQuiz = (quizId, userId, answersRaw // supports legacy number[][] or 
         if (q.type === "mcq") {
             const sel = (ans && ans.type === "mcq") ? ((_a = ans.selected) !== null && _a !== void 0 ? _a : []) : [];
             const isCorrect = q.options && exactMatch(sel, q.options);
-            const per = typeof q.perCorrectPoint === "number" ? q.perCorrectPoint : ((_b = task.perCorrectPoint) !== null && _b !== void 0 ? _b : 0);
+            const per = (_b = q.perCorrectPoint) !== null && _b !== void 0 ? _b : 0;
             const pts = isCorrect ? per : 0;
             if (isCorrect)
                 correctCount += 1;
             autoPoints += pts;
-            breakdown.push({ qIndex: qi, type: "mcq", selected: sel, autoPoints: pts });
+            breakdown.push({ qIndex: qi, type: "mcq", selected: sel, autoPoints: pts, pointsAwarded: pts, question: q.prompt });
         }
         else if (q.type === "short") {
             needsReview = true;
             const text = (ans && ans.type === "short") ? String((_c = ans.text) !== null && _c !== void 0 ? _c : "") : "";
-            breakdown.push({ qIndex: qi, type: "short", text, maxPoints: q.maxPoints });
+            breakdown.push({ qIndex: qi, type: "short", text, reviewPoints: 0, pointsAwarded: 0, perCorrectPoint: q.perCorrectPoint, question: q.prompt });
         }
         else {
             // Unknown type fallback: treat as short for safety
             needsReview = true;
             const text = (ans && ans.text) ? String(ans.text) : "";
-            breakdown.push({ qIndex: qi, type: "short", text, maxPoints: (_d = q.maxPoints) !== null && _d !== void 0 ? _d : 0 });
+            breakdown.push({ qIndex: qi, type: "short", text, reviewPoints: 0, pointsAwarded: 0, perCorrectPoint: (_d = q.perCorrectPoint) !== null && _d !== void 0 ? _d : 0, question: q.prompt });
         }
     });
     console.log("Quiz Submission Breakdown:", breakdown);
-    // Apply cap to autoPoints portion (final cap applied again after review)
-    let awardedNow = autoPoints;
+    // Award MCQ points immediately, short answers require review
+    let awardedNow = autoPoints; // Award MCQ points immediately
     if (typeof task.maxPoints === "number") {
-        awardedNow = Math.min(awardedNow, task.maxPoints);
+        awardedNow = Math.min(awardedNow, task.maxPoints); // Cap at task max
     }
+    // Determine status based on question types
     const status = needsReview ? "pending_review" : "auto_scored";
     // Create submission with breakdown
     const submission = yield submission_model_1.TaskSubmission.create({
@@ -222,15 +221,15 @@ const submitQuiz = (quizId, userId, answersRaw // supports legacy number[][] or 
         type: "quiz",
         instructor: (_a = (yield course_model_1.Course.findById(quiz.course))) === null || _a === void 0 ? void 0 : _a.instructor,
     });
-    // Give quiz points to user
-    if (submission.pointsAwarded > 0) {
+    // Award MCQ points immediately to student profile
+    if (awardedNow > 0) {
         yield gamification_service_1.GamificationServices.addPoints({
             userId,
-            points: submission.pointsAwarded,
+            points: awardedNow,
             sourceType: "quiz",
             courseId: String(task.course),
             taskId: String(task._id),
-            reason: `Quiz points`
+            reason: needsReview ? "Quiz MCQ points (short answers pending review)" : "Quiz completed - all points awarded"
         });
     }
     const passed = typeof quiz.passMark === "number"
@@ -273,7 +272,7 @@ const updateQuestionToQuiz = (quizId, questionId, actor, question) => __awaiter(
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "MCQ must have at least 2 options");
     }
     // Update the question
-    quiz.questions[questionIndex] = Object.assign(Object.assign({}, quiz.questions[questionIndex]), { type: question.type, prompt: question.prompt, options: question.options || [], maxPoints: question.maxPoints, perCorrectPoint: question.perCorrectPoint });
+    quiz.questions[questionIndex] = Object.assign(Object.assign({}, quiz.questions[questionIndex]), { type: question.type, prompt: question.prompt, options: question.options || [], perCorrectPoint: question.perCorrectPoint });
     yield quiz.save();
     return quiz;
 });

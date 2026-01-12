@@ -18,7 +18,7 @@ const generateCertificate = async (courseId: string, userId: string): Promise<Bu
     throw new AppError(httpStatus.NOT_FOUND, "Certificate not available. Course not completed.");
   }
 
-  const course = await Course.findById(courseId);
+  const course = await Course.findById(courseId).populate('instructor', 'name');
   const user = await User.findById(userId);
 
   if (!course || !user) {
@@ -111,16 +111,25 @@ const generateCertificate = async (courseId: string, userId: string): Promise<Bu
 
   // Signature area
   const signatureY = 420;
+
+  // Instructor signature
   doc.fontSize(12)
      .font('Helvetica')
      .fillColor('#374151')
-     .text('Instructor Signature', 100, signatureY);
+     .text(`${(course as any).instructor?.name || 'Instructor'}`, 100, signatureY);
 
   doc.moveTo(100, signatureY + 20)
      .lineTo(250, signatureY + 20)
      .stroke('#6b7280');
 
-  doc.text('Date', doc.page.width - 250, signatureY);
+  // Issue date
+  const issueDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  doc.text(`Issued: ${issueDate}`, doc.page.width - 250, signatureY);
 
   doc.moveTo(doc.page.width - 250, signatureY + 20)
      .lineTo(doc.page.width - 100, signatureY + 20)

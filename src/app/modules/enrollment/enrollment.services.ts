@@ -243,8 +243,10 @@ const updateTimeSpent = async (courseId: string, enrollmentId: string, actor: { 
 // Get total points earned by user in a course
 const getUserCoursePoints = async (courseId: string, userId: string) => {
   const { PointLog } = await import("../gamification/gamification.model");
+  const { Types } = await import("mongoose");
+
   const result = await PointLog.aggregate([
-    { $match: { course: courseId, user: userId } },
+    { $match: { course: new Types.ObjectId(courseId), user: new Types.ObjectId(userId) } },
     { $group: { _id: null, totalPoints: { $sum: "$points" } } }
   ]);
 

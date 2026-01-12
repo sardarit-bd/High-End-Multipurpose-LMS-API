@@ -19,7 +19,10 @@ const SubmissionSchema = new Schema<ITaskSubmission>(
 
     pointsAwarded: { type: Number, required: true, default: 0 },
     breakdown: { type: Array }, // per-question breakdown for quizzes
-    status: { type: String, enum: ["auto_scored" , "pending_review", "approved"], required: true, default: "pending_review" },
+    status: { type: String, enum: ["auto_scored" , "pending_review", "reviewed"], required: true, default: "pending_review" },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" }, // instructor who reviewed
+    reviewedAt: { type: Date }, // review timestamp
+    reviewNote: { type: String }, // instructor feedback/comments
   },
   { timestamps: true, versionKey: false }
 );

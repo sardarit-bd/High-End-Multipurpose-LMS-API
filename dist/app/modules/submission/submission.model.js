@@ -16,7 +16,10 @@ const SubmissionSchema = new mongoose_1.Schema({
     correctAnswers: { type: Number },
     pointsAwarded: { type: Number, required: true, default: 0 },
     breakdown: { type: Array }, // per-question breakdown for quizzes
-    status: { type: String, enum: ["auto_scored", "pending_review", "approved"], required: true, default: "pending_review" },
+    status: { type: String, enum: ["auto_scored", "pending_review", "reviewed"], required: true, default: "pending_review" },
+    reviewedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" }, // instructor who reviewed
+    reviewedAt: { type: Date }, // review timestamp
+    reviewNote: { type: String }, // instructor feedback/comments
 }, { timestamps: true, versionKey: false });
 SubmissionSchema.index({ course: 1, user: 1 });
 exports.TaskSubmission = mongoose_1.models.TaskSubmission || (0, mongoose_1.model)("TaskSubmission", SubmissionSchema);

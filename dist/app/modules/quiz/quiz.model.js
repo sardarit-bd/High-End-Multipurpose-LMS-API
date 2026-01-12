@@ -10,8 +10,7 @@ const QuestionSchema = new mongoose_1.Schema({
     type: { type: String, enum: ["mcq", 'short'], required: true },
     prompt: { type: String, required: true },
     options: { type: [OptionSchema] },
-    maxPoints: { type: Number },
-    perCorrectPoint: { type: Number },
+    perCorrectPoint: { type: Number }, // points for correct answer (MCQ) or max points (Short)
 }, { _id: false });
 const QuizSchema = new mongoose_1.Schema({
     unit: { type: mongoose_1.Schema.Types.ObjectId, ref: "Unit", required: true, index: true },
@@ -19,6 +18,7 @@ const QuizSchema = new mongoose_1.Schema({
     task: { type: mongoose_1.Schema.Types.ObjectId, ref: "Task", index: true }, // 1-1 with Task(type=quiz)
     title: { type: String, required: true },
     questions: { type: [QuestionSchema], required: true },
+    passMark: { type: Number, default: 50 }, // passing percentage
     isDeleted: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 QuizSchema.index({ unit: 1, createdAt: 1 });

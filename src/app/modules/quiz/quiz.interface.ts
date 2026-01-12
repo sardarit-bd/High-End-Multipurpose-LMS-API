@@ -8,9 +8,8 @@ export interface IQuizQuestion {
   prompt: string;
   // MCQ
   options?: { text:string; isCorrect: boolean }[];
-  // Scoring
-  perCorrectPoint?: number;  // for MCQ (optional override; falls back to Task.perCorrectPoint)
-  maxPoints?: number;        // for SHORT (required)
+  // Scoring - both MCQ and Short questions use perCorrectPoint
+  perCorrectPoint?: number;  // points awarded for correct answer (MCQ) or max points (Short)
 }
 
 
@@ -21,6 +20,7 @@ export interface IQuiz {
   task?: Types.ObjectId;               // <-- link to Task(type="quiz")
   title: string;                  // optional (%)
   questions: IQuizQuestion[];
+  passMark?: number;              // passing percentage (default 50)
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

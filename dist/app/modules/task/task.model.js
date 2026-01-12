@@ -8,8 +8,7 @@ const TaskSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     description: { type: String, default: "" },
     type: { type: String, enum: ["quiz", "video", "pdf"], required: true },
-    perCorrectPoint: { type: Number }, // quiz
-    maxPoints: { type: Number }, // cap for any type
+    maxPoints: { type: Number }, // cap for video/pdf types
     dueDate: { type: Date },
     quizId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Quiz" }, // when type === "quiz"
     isDeleted: { type: Boolean, default: false },

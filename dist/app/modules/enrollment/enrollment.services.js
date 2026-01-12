@@ -258,8 +258,9 @@ const updateTimeSpent = (courseId, enrollmentId, actor, timeSpent) => __awaiter(
 const getUserCoursePoints = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { PointLog } = yield Promise.resolve().then(() => __importStar(require("../gamification/gamification.model")));
+    const { Types } = yield Promise.resolve().then(() => __importStar(require("mongoose")));
     const result = yield PointLog.aggregate([
-        { $match: { course: courseId, user: userId } },
+        { $match: { course: new Types.ObjectId(courseId), user: new Types.ObjectId(userId) } },
         { $group: { _id: null, totalPoints: { $sum: "$points" } } }
     ]);
     return ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.totalPoints) || 0;

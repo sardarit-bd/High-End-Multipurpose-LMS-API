@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-export type SubmissionStatus = "auto_scored" | "pending_review";
+export type SubmissionStatus = "auto_scored" | "pending_review" | "reviewed";
 
 export interface IAnsweredItem {
     qIndex: number;
@@ -10,6 +10,7 @@ export interface IAnsweredItem {
     autoPoints?: number;   // computed for mcq
     reviewPoints?: number; // set by instructor for short
     maxPoints?: number;    // short question cap (for UI/reference)
+    question?: string;     // question prompt text
 }
 export interface ITaskSubmission {
     _id?: Types.ObjectId;
@@ -31,7 +32,10 @@ export interface ITaskSubmission {
     correctAnswers?: number;
     breakdown?: IAnsweredItem[];
     pointsAwarded: number;        // final awarded (0..maxPoints or computed for quiz)
-    status: SubmissionStatus;     // pending/approved/rejected/auto_scored
+    status: SubmissionStatus;     // pending/approved/rejected/auto_scored/reviewed
+    reviewedBy?: Types.ObjectId;  // instructor who reviewed
+    reviewedAt?: Date;            // review timestamp
+    reviewNote?: string;          // instructor feedback/comments
     createdAt?: Date;
     updatedAt?: Date;
 }

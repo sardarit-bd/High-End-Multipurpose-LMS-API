@@ -72,10 +72,46 @@ const getMyTaskSubmission = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
         data: submission,
     });
 }));
+const getSubmissionsForReview = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const { taskId } = req.params;
+    const submissions = yield submission_services_1.SubmissionServices.getSubmissionsForReview(taskId, token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Submissions pending review",
+        data: submissions,
+    });
+}));
+const reviewSubmission = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const { submissionId } = req.params;
+    const reviewed = yield submission_services_1.SubmissionServices.reviewSubmission(submissionId, { userId: token.userId, role: token.role }, req.body);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Submission reviewed successfully",
+        data: reviewed,
+    });
+}));
+const getSubmissionsByUnit = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const { unitId } = req.params;
+    const submissions = yield submission_services_1.SubmissionServices.getSubmissionsByUnit(unitId, token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Submissions for unit",
+        data: submissions,
+    });
+}));
 exports.submissionController = {
     createReviewedSubmission,
     gradeSubmission,
     getMyCourseTotal,
     getMySubmissionsByUnit,
-    getMyTaskSubmission
+    getMyTaskSubmission,
+    getSubmissionsForReview,
+    reviewSubmission,
+    getSubmissionsByUnit
 };

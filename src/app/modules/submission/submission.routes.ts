@@ -44,5 +44,26 @@ router.get(
   submissionController.getMyTaskSubmission
 );
 
+/** INSTRUCTOR gets submissions for review */
+router.get(
+  "/tasks/:taskId/review",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.getSubmissionsForReview
+);
+
+/** INSTRUCTOR reviews a submission */
+router.patch(
+  "/:submissionId/review",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.reviewSubmission
+);
+
+/** Get all submissions for a unit (for instructors) */
+router.get(
+  "/units/:unitId/submissions",
+  checkAuth(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.getSubmissionsByUnit
+);
+
 
 export const SubmissionRoutes = router;

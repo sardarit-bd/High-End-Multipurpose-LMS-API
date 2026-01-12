@@ -14,8 +14,7 @@ const QuestionSchema = new Schema<IQuizQuestion>(
     type: { type: String, enum: ["mcq", 'short'], required: true },
     prompt: { type: String, required: true },
     options: { type: [OptionSchema] },
-    maxPoints: { type: Number },
-    perCorrectPoint: { type: Number },
+    perCorrectPoint: { type: Number }, // points for correct answer (MCQ) or max points (Short)
   },
   { _id: false }
 );
@@ -28,6 +27,7 @@ const QuizSchema = new Schema<IQuiz>(
 
     title:    { type: String, required: true },
     questions: { type: [QuestionSchema], required: true },
+    passMark:  { type: Number, default: 50 }, // passing percentage
 
     isDeleted: { type: Boolean, default: false },
   },

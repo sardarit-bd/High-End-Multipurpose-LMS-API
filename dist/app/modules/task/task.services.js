@@ -37,7 +37,6 @@ const create = (unitId, payload, actor) => __awaiter(void 0, void 0, void 0, fun
         title: payload.title,
         type: payload.type,
         description: payload.description,
-        perCorrectPoint: payload.perCorrectPoint,
         maxPoints: payload.maxPoints,
         quizId: payload.quizId,
         dueDate: payload.dueDate
@@ -114,8 +113,6 @@ const update = (taskId, payload, actor) => __awaiter(void 0, void 0, void 0, fun
         task.type = payload.type;
     if (payload.dueDate !== undefined)
         task.dueDate = payload.dueDate;
-    if (payload.perCorrectPoint !== undefined)
-        task.perCorrectPoint = payload.perCorrectPoint;
     if (payload.maxPoints !== undefined)
         task.maxPoints = payload.maxPoints;
     yield task.save();

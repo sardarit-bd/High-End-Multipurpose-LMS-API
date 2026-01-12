@@ -54,6 +54,7 @@ const course_model_1 = require("../course/course.model");
 const user_model_1 = require("../user/user.model");
 const pdfkit_1 = __importDefault(require("pdfkit"));
 const generateCertificate = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     // Check if user is enrolled and course is completed
     const enrollment = yield enrollment_model_1.Enrollment.findOne({
         course: courseId,
@@ -63,7 +64,7 @@ const generateCertificate = (courseId, userId) => __awaiter(void 0, void 0, void
     if (!enrollment) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Certificate not available. Course not completed.");
     }
-    const course = yield course_model_1.Course.findById(courseId);
+    const course = yield course_model_1.Course.findById(courseId).populate('instructor', 'name');
     const user = yield user_model_1.User.findById(userId);
     if (!course || !user) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Course or user not found.");
@@ -141,14 +142,21 @@ const generateCertificate = (courseId, userId) => __awaiter(void 0, void 0, void
     });
     // Signature area
     const signatureY = 420;
+    // Instructor signature
     doc.fontSize(12)
         .font('Helvetica')
         .fillColor('#374151')
-        .text('Instructor Signature', 100, signatureY);
+        .text(`${((_a = course.instructor) === null || _a === void 0 ? void 0 : _a.name) || 'Instructor'}`, 100, signatureY);
     doc.moveTo(100, signatureY + 20)
         .lineTo(250, signatureY + 20)
         .stroke('#6b7280');
-    doc.text('Date', doc.page.width - 250, signatureY);
+    // Issue date
+    const issueDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    doc.text(`Issued: ${issueDate}`, doc.page.width - 250, signatureY);
     doc.moveTo(doc.page.width - 250, signatureY + 20)
         .lineTo(doc.page.width - 100, signatureY + 20)
         .stroke('#6b7280');

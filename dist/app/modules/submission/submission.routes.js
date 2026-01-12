@@ -20,4 +20,10 @@ router.get("/:courseId/points/me", (0, checkAuth_1.checkAuth)(user_interface_1.R
 router.get("/units/:unitId/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMySubmissionsByUnit);
 /** Check if task is submitted by me */
 router.get("/tasks/:taskId/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMyTaskSubmission);
+/** INSTRUCTOR gets submissions for review */
+router.get("/tasks/:taskId/review", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getSubmissionsForReview);
+/** INSTRUCTOR reviews a submission */
+router.patch("/:submissionId/review", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.reviewSubmission);
+/** Get all submissions for a unit (for instructors) */
+router.get("/units/:unitId/submissions", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getSubmissionsByUnit);
 exports.SubmissionRoutes = router;

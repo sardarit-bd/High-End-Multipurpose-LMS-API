@@ -21,7 +21,7 @@ exports.createCourseZodSchema = zod_1.default.object({
     status: zod_1.default.enum(["draft", "published"]).optional(),
     scoring: scoringZ.optional(),
     awardOnComplete: zod_1.default.string().optional(),
-    introVideo: zod_1.default.string().url().optional()
+    introVideo: zod_1.default.string().optional()
 });
 exports.updateCourseZodSchema = zod_1.default.object({
     title: zod_1.default.string().min(2, "Title must be at least 2 characters").optional(),

@@ -58,7 +58,6 @@ const createQuiz = async (
   payload: {
     title: Record<string, string>;
     passMark?: number;
-    perCorrectPoint?: number;
     maxPoints?: number;
   },
   actor: { userId: string; role: string }
@@ -79,7 +78,6 @@ const createQuiz = async (
     course: course._id,
     title: payload.title,
     type: "quiz",
-    perCorrectPoint: payload.perCorrectPoint || 1,
     maxPoints: payload.maxPoints,
   });
 
@@ -107,7 +105,6 @@ const addQuestionToQuiz = async (
     type: "mcq" | "short";
     prompt: string;
     options?: { text: string; isCorrect?: boolean }[];
-    maxPoints?: number;
     perCorrectPoint?: number;
   }
 ) => {
@@ -131,7 +128,6 @@ const addQuestionToQuiz = async (
     type: question.type,
     prompt: question.prompt,
     options: question.options || [],
-    maxPoints: question.maxPoints,
     perCorrectPoint: question.perCorrectPoint,
   });
 
@@ -219,7 +215,9 @@ const submitQuiz = async (
     text?: string;
     autoPoints?: number;
     reviewPoints?: number;
-    maxPoints?: number;
+    pointsAwarded?: number; // final awarded points for this question
+    perCorrectPoint?: number; // max points for this question
+    question?: string; // Add question prompt
   }> = [];
 
   quiz.questions.forEach((q: any, qi: number) => {
@@ -228,32 +226,34 @@ const submitQuiz = async (
     if (q.type === "mcq") {
       const sel = (ans && ans.type === "mcq") ? (ans.selected ?? []) : [];
       const isCorrect = q.options && exactMatch(sel, q.options);
-      const per = typeof q.perCorrectPoint === "number" ? q.perCorrectPoint : (task.perCorrectPoint ?? 0);
+      const per = q.perCorrectPoint ?? 0;
       const pts = isCorrect ? per : 0;
       if (isCorrect) correctCount += 1;
       autoPoints += pts;
 
-      breakdown.push({ qIndex: qi, type: "mcq", selected: sel, autoPoints: pts });
+      breakdown.push({ qIndex: qi, type: "mcq", selected: sel, autoPoints: pts, pointsAwarded: pts, question: q.prompt });
     } else if (q.type === "short") {
       needsReview = true;
       const text = (ans && ans.type === "short") ? String(ans.text ?? "") : "";
-      breakdown.push({ qIndex: qi, type: "short", text, maxPoints: q.maxPoints });
+      breakdown.push({ qIndex: qi, type: "short", text, reviewPoints: 0, pointsAwarded: 0, perCorrectPoint: q.perCorrectPoint, question: q.prompt });
     } else {
       // Unknown type fallback: treat as short for safety
       needsReview = true;
       const text = (ans && (ans as any).text) ? String((ans as any).text) : "";
-      breakdown.push({ qIndex: qi, type: "short", text, maxPoints: q.maxPoints ?? 0 });
+      breakdown.push({ qIndex: qi, type: "short", text, reviewPoints: 0, pointsAwarded: 0, perCorrectPoint: q.perCorrectPoint ?? 0, question: q.prompt });
     }
   });
 
   console.log("Quiz Submission Breakdown:", breakdown);
-  // Apply cap to autoPoints portion (final cap applied again after review)
-  let awardedNow = autoPoints;
+
+  // Award MCQ points immediately, short answers require review
+  let awardedNow = autoPoints; // Award MCQ points immediately
   if (typeof task.maxPoints === "number") {
-    awardedNow = Math.min(awardedNow, task.maxPoints);
+    awardedNow = Math.min(awardedNow, task.maxPoints); // Cap at task max
   }
 
-  const status: "auto_scored" | "pending_review" = needsReview ? "pending_review" : "auto_scored";
+  // Determine status based on question types
+  const status = needsReview ? "pending_review" : "auto_scored";
 
   // Create submission with breakdown
   const submission = await TaskSubmission.create({
@@ -269,15 +269,15 @@ const submitQuiz = async (
     instructor: (await Course.findById(quiz.course))?.instructor,
   });
 
-  // Give quiz points to user
-  if (submission.pointsAwarded > 0) {
+  // Award MCQ points immediately to student profile
+  if (awardedNow > 0) {
     await GamificationServices.addPoints({
       userId,
-      points: submission.pointsAwarded,
+      points: awardedNow,
       sourceType: "quiz",
       courseId: String(task.course),
       taskId: String(task._id),
-      reason: `Quiz points`
+      reason: needsReview ? "Quiz MCQ points (short answers pending review)" : "Quiz completed - all points awarded"
     });
   }
   const passed =
@@ -312,7 +312,6 @@ const updateQuestionToQuiz = async (
     type: "mcq" | "short";
     prompt: string;
     options?: { text: string; isCorrect?: boolean }[];
-    maxPoints?: number;
     perCorrectPoint?: number;
   }
 ) => {
@@ -341,7 +340,6 @@ const updateQuestionToQuiz = async (
     type: question.type,
     prompt: question.prompt,
     options: question.options || [],
-    maxPoints: question.maxPoints,
     perCorrectPoint: question.perCorrectPoint,
   };
 

@@ -81,12 +81,61 @@ const getMyTaskSubmission = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSubmissionsForReview = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { taskId } = req.params;
 
+  const submissions = await SubmissionServices.getSubmissionsForReview(taskId, token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Submissions pending review",
+    data: submissions,
+  });
+});
+
+const reviewSubmission = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { submissionId } = req.params;
+
+  const reviewed = await SubmissionServices.reviewSubmission(
+    submissionId,
+    { userId: token.userId, role: token.role },
+    req.body
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Submission reviewed successfully",
+    data: reviewed,
+  });
+});
+
+
+
+const getSubmissionsByUnit = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { unitId } = req.params;
+
+  const submissions = await SubmissionServices.getSubmissionsByUnit(unitId, token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Submissions for unit",
+    data: submissions,
+  });
+});
 
 export const submissionController = {
   createReviewedSubmission,
   gradeSubmission,
   getMyCourseTotal,
   getMySubmissionsByUnit,
-  getMyTaskSubmission
+  getMyTaskSubmission,
+  getSubmissionsForReview,
+  reviewSubmission,
+  getSubmissionsByUnit
 };
