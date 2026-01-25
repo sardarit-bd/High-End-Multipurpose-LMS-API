@@ -51,6 +51,28 @@ const getMe = async (userId: string) => {
   return user;
 };
 
+const updateMe = async (userId: string, payload: Partial<IUser>) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
+  // Only allow updating certain fields
+  const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture', 'gender', 'dob'];
+  const updates: Partial<IUser> = {};
+
+  for (const field of allowedFields) {
+    if ((payload as any)[field] !== undefined) {
+      (updates as any)[field] = (payload as any)[field];
+    }
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
+
+  return updatedUser;
+};
+
 const getInstructor = async (id: string) => {
   // Try to find instructor by userId first, then by instructor document _id if not found
   let instructor = await Instructor.findOne({userId: id}).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
@@ -186,6 +208,7 @@ const updateInstructor = async (
 
 export const UserServices = {
     getMe,
+    updateMe,
     createUser,
     requestInstructor,
     approveInstructor,

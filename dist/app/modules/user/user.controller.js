@@ -30,9 +30,19 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0,
     const verifiedToken = req.user;
     const user = (yield user_services_1.UserServices.getMe(verifiedToken.userId));
     (0, sendResponse_1.sendResponse)(res, {
-        statusCode: http_status_codes_1.default.CREATED,
+        statusCode: http_status_codes_1.default.OK,
         success: true,
-        message: "User Updated Successfully",
+        message: "User profile fetched successfully",
+        data: user,
+    });
+}));
+const updateMe = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const verifiedToken = req.user;
+    const user = yield user_services_1.UserServices.updateMe(verifiedToken.userId, req.body);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Profile updated successfully",
         data: user,
     });
 }));
@@ -97,6 +107,7 @@ const updateInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
 exports.userController = {
     createUser,
     getMe,
+    updateMe,
     requestInstructor,
     approveInstructor,
     getInstructor,

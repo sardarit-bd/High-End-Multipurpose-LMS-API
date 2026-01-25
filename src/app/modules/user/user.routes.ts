@@ -14,6 +14,7 @@ router.post(
   userController.createUser
 );
 router.get("/me", checkAuth(...Object.values(Role)), userController.getMe);
+router.patch("/me", checkAuth(...Object.values(Role)), userController.updateMe);
 router.get("/instructor/:id", userController.getInstructor)
 router.get("/instructor", userController.getAllInstructors)
 

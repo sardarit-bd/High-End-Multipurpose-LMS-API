@@ -59,6 +59,22 @@ const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return user;
 });
+const updateMe = (userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId);
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
+    }
+    // Only allow updating certain fields
+    const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture'];
+    const updates = {};
+    for (const field of allowedFields) {
+        if (payload[field] !== undefined) {
+            updates[field] = payload[field];
+        }
+    }
+    const updatedUser = yield user_model_1.User.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
+    return updatedUser;
+});
 const getInstructor = (id) => __awaiter(void 0, void 0, void 0, function* () {
     // Try to find instructor by userId first, then by instructor document _id if not found
     let instructor = yield user_model_1.Instructor.findOne({ userId: id }).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified');
@@ -166,6 +182,7 @@ const updateInstructor = (id, updates, actor) => __awaiter(void 0, void 0, void 
 });
 exports.UserServices = {
     getMe,
+    updateMe,
     createUser,
     requestInstructor,
     approveInstructor,

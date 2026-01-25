@@ -27,9 +27,24 @@ const getMe = catchAsync(
          const user = (await UserServices.getMe(verifiedToken.userId)) as IUser;
 
         sendResponse(res, {
-            statusCode: httpStatus.CREATED,
+            statusCode: httpStatus.OK,
             success: true,
-            message: "User Updated Successfully",
+            message: "User profile fetched successfully",
+            data: user,
+        });
+    }
+);
+
+const updateMe = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const verifiedToken = req.user as JwtPayload;
+
+        const user = await UserServices.updateMe(verifiedToken.userId, req.body);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Profile updated successfully",
             data: user,
         });
     }
@@ -111,6 +126,7 @@ const updateInstructor = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
     createUser,
     getMe,
+    updateMe,
     requestInstructor,
     approveInstructor,
     getInstructor,

@@ -10,6 +10,7 @@ const checkAuth_1 = require("../../middlewares/checkAuth");
 const router = (0, express_1.Router)();
 router.post("/register", (0, validateRequest_1.validateRequest)(user_validation_1.createUserZodSchema), user_controller_1.userController.createUser);
 router.get("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.userController.getMe);
+router.patch("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.userController.updateMe);
 router.get("/instructor/:id", user_controller_1.userController.getInstructor);
 router.get("/instructor", user_controller_1.userController.getAllInstructors);
 router.post("/request-instructor", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT), // allow student; instructors/admins will be rejected by service if already
