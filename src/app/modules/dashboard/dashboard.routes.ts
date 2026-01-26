@@ -40,4 +40,9 @@ router.get(
   DashboardController.getStudentDashboard
 );
 
+router.get(
+  "/admin-stats",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  DashboardController.getAdminStats
+);
 export const DashboardRoutes = router;

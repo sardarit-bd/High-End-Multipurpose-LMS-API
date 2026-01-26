@@ -21,6 +21,7 @@ import { UploadRoutes } from "../modules/upload/upload.route";
 import { CategoryRoutes } from "../modules/ecom/category/category.routes";
 import { ProductRoutes } from "../modules/ecom/product/product.routes";
 import { DashboardRoutes } from "../modules/dashboard/dashboard.routes";
+import { categoriesRoutes } from "../modules/category/category.routes";
 
 
 export const router = Router()
@@ -41,6 +42,10 @@ const moduleRoutes = [
     {
         path: '/otp',
         route: OtpRoutes
+    },
+    {
+        path: '/courses/categories',
+        route: categoriesRoutes
     },
     {
         path: '/courses',

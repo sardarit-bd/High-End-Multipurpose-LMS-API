@@ -112,7 +112,7 @@ const getOrderBySession = catchAsync(async (req: Request, res: Response) => {
  * 🧾 Admin: Get all orders (global list)
  */
 const getOrders = catchAsync(async (req: Request, res: Response) => {
-  const orders = await OrderServices.getOrders();
+  const orders = await OrderServices.getOrders(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -6,7 +6,7 @@ import bcryptjs from 'bcryptjs';
 import { envVars } from "../../config/env";
 
 const createUser = async (payload: Partial<IUser>) => {
-  console.log("Payload in service:", payload);
+
     const { email, password, ...rest } = payload;
 
     const isUserExist = await User.findOne({ email });
@@ -92,20 +92,36 @@ const getInstructor = async (id: string) => {
 const getAllInstructors = async (query: any = {}) => {
   const { q, page = 1, limit = 10 } = query;
 
+  // First, find matching users if search query is provided
+  let userIds:any = [];
+  if (q) {
+    const matchingUsers = await User.find({
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } }
+      ]
+    }).select('_id');
+    
+    userIds = matchingUsers.map(user => user._id);
+  }
+
   // Build filter for instructors
   const filter: any = {};
 
-  // If search query provided, search in user name or instructor designation
+  // If search query provided
   if (q) {
     filter.$or = [
-      { 'userId.name': { $regex: q, $options: 'i' } },
-      { designation: { $regex: q, $options: 'i' } },
-      { 'userId.email': { $regex: q, $options: 'i' } }
+      { designation: { $regex: q, $options: 'i' } }
     ];
+    
+    // Only add userId search if we found matching users
+    if (userIds.length > 0) {
+      filter.$or.push({ userId: { $in: userIds } });
+    }
   }
 
   const instructors = await Instructor.find(filter)
-    .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+    .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified instructorRequest')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -114,6 +130,82 @@ const getAllInstructors = async (query: any = {}) => {
 
   return {
     instructors,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit)
+  };
+};
+
+const getAllStudents = async (query: any = {}) => {
+  const { q, page = 1, limit = 10 } = query;
+
+  // Build filter for students (users with role "student")
+  const filter: any = {
+    role: Role.STUDENT,
+    isDeleted: false
+  };
+
+  // If search query provided, search in name or email
+  if (q) {
+    filter.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { email: { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  const students = await User.aggregate([
+    {
+      $match: filter
+    },
+    {
+      $lookup: {
+        from: "enrollments",
+        localField: "_id",
+        foreignField: "user",
+        as: "enrollments"
+      }
+    },
+    {
+      $lookup: {
+        from: "pointwallets",
+        localField: "_id",
+        foreignField: "user",
+        as: "pointWallet"
+      }
+    },
+    {
+      $addFields: {
+        totalEnrolledCourses: { $size: "$enrollments" },
+        points: { $ifNull: [{ $arrayElemAt: ["$pointWallet.totalPoints", 0] }, 0] },
+        joinedDate: "$createdAt"
+      }
+    },
+    {
+      $project: {
+        name: 1,
+        email: 1,
+        picture: 1,
+        totalEnrolledCourses: 1,
+        points: 1,
+        joinedDate: 1,
+        createdAt: 1
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: (page - 1) * limit
+    },
+    {
+      $limit: limit * 1
+    }
+  ]);
+
+  const total = await User.countDocuments(filter);
+
+  return {
+    students,
     total,
     page: parseInt(page),
     totalPages: Math.ceil(total / limit)
@@ -206,6 +298,120 @@ const updateInstructor = async (
   return instructor;
 };
 
+const getAllAdmins = async (
+  query: any = {},
+  actor: { userId: string; role: string }
+) => {
+  // Check if actor is SUPER_ADMIN
+  if (actor.role !== "SUPER_ADMIN") {
+    throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+  }
+
+  const { q, page = 1, limit = 10 } = query;
+ 
+  const filter: any = {
+    role: { $in: ['SUPER_ADMIN', 'ADMIN'] },
+    isDeleted: false
+  };
+
+  if (q) {
+    filter.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { email: { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  const admins = await User.find(filter)
+    .select('-password -auths -__v')
+    .sort({ createdAt: -1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit);
+
+  const total = await User.countDocuments(filter);
+
+  return {
+    admins,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit)
+  };
+};
+
+const createAdmin = async (
+  data : Partial<IInstructor & IUser>,
+  actor: { userId: string; role: string }
+) => {
+  // Check if actor is SUPER_ADMIN
+  if (actor.role !== "SUPER_ADMIN") {
+    throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+  }
+
+  const { name, email, password, role } = data;
+  
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User with this email already exists");
+  }
+
+  const hashedPassword = await bcryptjs.hash(
+        password as string,
+        Number(envVars.BCRYPT_SALT_ROUND)
+    );
+  // Create new admin user
+  const newAdmin = new User({
+    name,
+    email,
+    password: hashedPassword,
+    role: role || 'ADMIN',
+    isVerified: true
+  });
+
+  await newAdmin.save();
+
+  // Remove password from response
+  const adminData = newAdmin.toObject();
+  delete adminData.password;
+
+  return adminData;
+};
+
+const deleteAdmin = async (
+  id: string,
+  actor:  { userId: string; role: string }
+) => {
+  // Check if actor is SUPER_ADMIN
+  if (actor.role !== "SUPER_ADMIN") {
+    throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
+  }
+
+  // Prevent deleting yourself
+  if (actor.userId === id) {
+    throw new AppError(httpStatus.BAD_REQUEST, "You cannot delete your own account");
+  }
+
+  const admin = await User.findById(id);
+  if (!admin) {
+    throw new AppError(httpStatus.NOT_FOUND, "Admin not found");
+  }
+
+  // Check if trying to delete another SUPER_ADMIN (only SUPER_ADMIN can delete SUPER_ADMIN)
+  if (admin.role === "SUPER_ADMIN") {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot delete another Super Admin");
+  }
+
+
+  admin.isDeleted = true;
+  await admin.save();
+
+  // Remove password from response
+  const adminData = admin.toObject();
+  delete adminData.password;
+
+  return adminData;
+};
+
+
 export const UserServices = {
     getMe,
     updateMe,
@@ -214,5 +420,9 @@ export const UserServices = {
     approveInstructor,
     getInstructor,
     getAllInstructors,
-    updateInstructor
+    updateInstructor,
+    getAllStudents,
+    getAllAdmins,
+    createAdmin,
+    deleteAdmin
 };

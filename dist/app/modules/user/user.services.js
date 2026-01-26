@@ -65,7 +65,7 @@ const updateMe = (userId, payload) => __awaiter(void 0, void 0, void 0, function
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
     }
     // Only allow updating certain fields
-    const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture'];
+    const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture', 'gender', 'dob'];
     const updates = {};
     for (const field of allowedFields) {
         if (payload[field] !== undefined) {

@@ -5,6 +5,7 @@ import { Enrollment } from "../enrollment/enrollment.model";
 import { Order } from "../order/order.model";
 import { Task } from "../task/task.model";
 import { TaskSubmission } from "../submission/submission.model";
+import { Role } from "../user/user.interface";
 
 
 const getInstructorStats = async (instructorId: string) => {
@@ -49,6 +50,7 @@ const getInstructorStats = async (instructorId: string) => {
   };
 };
 
+
 const getInstructorDashboard = async (instructorId: string) => {
   // Get top courses with subscriber counts
   const topCourses = await Course.aggregate([
@@ -82,11 +84,11 @@ const getInstructorDashboard = async (instructorId: string) => {
   const recentSubmissions = await TaskSubmission.find({
     instructor: instructorId
   })
-  .populate('user', 'name')
-  .populate('task', 'title')
-  .sort({ createdAt: -1 })
-  .limit(3)
-  .select('user task createdAt');
+    .populate('user', 'name')
+    .populate('task', 'title')
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .select('user task createdAt');
 
   // Get unevaluated tasks
   const unevaluatedTasks = await Task.aggregate([
@@ -293,10 +295,114 @@ const getStudentDashboard = async (studentId: string) => {
   };
 };
 
+
+const getAdminStats = async () => {
+  // Count total unique students (users with role "student")
+  const totalStudents = await User.countDocuments({
+    role: Role.STUDENT,
+    isDeleted: false
+  });
+
+  // Count total instructors (users with role "instructor")
+  const totalInstructors = await User.countDocuments({
+    role: Role.INSTRUCTOR,
+    isDeleted: false
+  });
+
+  // Count total courses
+  const totalCourses = await Course.countDocuments({
+    isDeleted: false
+  });
+
+  // Count pending courses (draft status)
+  const pendingCourses = await Course.countDocuments({
+    status: "draft",
+    isDeleted: false
+  });
+
+  // Count published courses
+  const publishedCourses = await Course.countDocuments({
+    status: "published",
+    isDeleted: false
+  });
+
+  // Calculate total revenue from completed orders
+  const earnings = await Order.aggregate([
+    {
+      $match: {
+        status: "completed"
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$amount" }
+      }
+    }
+  ]);
+
+  // Get published courses grouped by month
+  let publishedCoursesByMonth = await Course.aggregate([
+    {
+      $match: {
+        status: "published",
+        isDeleted: false,
+        createdAt: {
+          $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" }
+        },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { "_id.year": 1, "_id.month": 1 }
+    }
+  ]);
+
+  // Generate last 12 months with zeros for missing months
+  const last12Months = [];
+  const now = new Date();
+
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+
+    const found = publishedCoursesByMonth.find(
+      item => item._id.year === year && item._id.month === month
+    );
+
+    last12Months.push({
+      _id: { year, month },
+      count: found ? found.count : 0
+    });
+  }
+
+  // Replace the original result with the complete 12-month data
+  publishedCoursesByMonth = last12Months;
+
+  return {
+    totalStudents,
+    totalInstructors,
+    totalCourses,
+    totalRevenue: earnings[0]?.total || 0,
+    pendingCourses,
+    publishedCourses,
+    publishedCoursesByMonth
+  };
+};
 export const DashboardServices = {
   getInstructorStats,
   getInstructorDashboard,
   getEarningsChart,
   getCourseStats,
   getStudentDashboard,
+  getAdminStats
 };
