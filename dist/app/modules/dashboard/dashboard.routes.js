@@ -16,4 +16,5 @@ router.get("/earnings-chart", (0, checkAuth_1.checkAuth)(user_interface_1.Role.I
 router.get("/course-stats/:instructorId", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR), dashboard_controller_1.DashboardController.getCourseStats);
 /** GET /dashboard/student — STUDENT only */
 router.get("/student", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT), dashboard_controller_1.DashboardController.getStudentDashboard);
+router.get("/admin-stats", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), dashboard_controller_1.DashboardController.getAdminStats);
 exports.DashboardRoutes = router;

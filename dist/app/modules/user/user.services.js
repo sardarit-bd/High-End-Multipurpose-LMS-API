@@ -31,7 +31,6 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const env_1 = require("../../config/env");
 const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Payload in service:", payload);
     const { email, password } = payload, rest = __rest(payload, ["email", "password"]);
     const isUserExist = yield user_model_1.User.findOne({ email });
     if (isUserExist) {
@@ -89,24 +88,107 @@ const getInstructor = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getAllInstructors = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
     const { q, page = 1, limit = 10 } = query;
+    // First, find matching users if search query is provided
+    let userIds = [];
+    if (q) {
+        const matchingUsers = yield user_model_1.User.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ]
+        }).select('_id');
+        userIds = matchingUsers.map(user => user._id);
+    }
     // Build filter for instructors
     const filter = {};
-    // If search query provided, search in user name or instructor designation
+    // If search query provided
     if (q) {
         filter.$or = [
-            { 'userId.name': { $regex: q, $options: 'i' } },
-            { designation: { $regex: q, $options: 'i' } },
-            { 'userId.email': { $regex: q, $options: 'i' } }
+            { designation: { $regex: q, $options: 'i' } }
         ];
+        // Only add userId search if we found matching users
+        if (userIds.length > 0) {
+            filter.$or.push({ userId: { $in: userIds } });
+        }
     }
     const instructors = yield user_model_1.Instructor.find(filter)
-        .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+        .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified instructorRequest')
         .sort({ createdAt: -1 })
         .limit(limit * 1)
         .skip((page - 1) * limit);
     const total = yield user_model_1.Instructor.countDocuments(filter);
     return {
         instructors,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+    };
+});
+const getAllStudents = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
+    const { q, page = 1, limit = 10 } = query;
+    // Build filter for students (users with role "student")
+    const filter = {
+        role: user_interface_1.Role.STUDENT,
+        isDeleted: false
+    };
+    // If search query provided, search in name or email
+    if (q) {
+        filter.$or = [
+            { name: { $regex: q, $options: 'i' } },
+            { email: { $regex: q, $options: 'i' } }
+        ];
+    }
+    const students = yield user_model_1.User.aggregate([
+        {
+            $match: filter
+        },
+        {
+            $lookup: {
+                from: "enrollments",
+                localField: "_id",
+                foreignField: "user",
+                as: "enrollments"
+            }
+        },
+        {
+            $lookup: {
+                from: "pointwallets",
+                localField: "_id",
+                foreignField: "user",
+                as: "pointWallet"
+            }
+        },
+        {
+            $addFields: {
+                totalEnrolledCourses: { $size: "$enrollments" },
+                points: { $ifNull: [{ $arrayElemAt: ["$pointWallet.totalPoints", 0] }, 0] },
+                joinedDate: "$createdAt"
+            }
+        },
+        {
+            $project: {
+                name: 1,
+                email: 1,
+                picture: 1,
+                totalEnrolledCourses: 1,
+                points: 1,
+                joinedDate: 1,
+                createdAt: 1
+            }
+        },
+        {
+            $sort: { createdAt: -1 }
+        },
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: limit * 1
+        }
+    ]);
+    const total = yield user_model_1.User.countDocuments(filter);
+    return {
+        students,
         total,
         page: parseInt(page),
         totalPages: Math.ceil(total / limit)
@@ -180,6 +262,85 @@ const updateInstructor = (id, updates, actor) => __awaiter(void 0, void 0, void 
     yield user.save();
     return instructor;
 });
+const getAllAdmins = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}, actor) {
+    // Check if actor is SUPER_ADMIN
+    if (actor.role !== "SUPER_ADMIN") {
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    }
+    const { q, page = 1, limit = 10 } = query;
+    const filter = {
+        role: { $in: ['SUPER_ADMIN', 'ADMIN'] },
+        isDeleted: false
+    };
+    if (q) {
+        filter.$or = [
+            { name: { $regex: q, $options: 'i' } },
+            { email: { $regex: q, $options: 'i' } }
+        ];
+    }
+    const admins = yield user_model_1.User.find(filter)
+        .select('-password -auths -__v')
+        .sort({ createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+    const total = yield user_model_1.User.countDocuments(filter);
+    return {
+        admins,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+    };
+});
+const createAdmin = (data, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    // Check if actor is SUPER_ADMIN
+    if (actor.role !== "SUPER_ADMIN") {
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    }
+    const { name, email, password, role } = data;
+    // Check if user already exists
+    const existingUser = yield user_model_1.User.findOne({ email });
+    if (existingUser) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User with this email already exists");
+    }
+    const hashedPassword = yield bcryptjs_1.default.hash(password, Number(env_1.envVars.BCRYPT_SALT_ROUND));
+    // Create new admin user
+    const newAdmin = new user_model_1.User({
+        name,
+        email,
+        password: hashedPassword,
+        role: role || 'ADMIN',
+        isVerified: true
+    });
+    yield newAdmin.save();
+    // Remove password from response
+    const adminData = newAdmin.toObject();
+    delete adminData.password;
+    return adminData;
+});
+const deleteAdmin = (id, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    // Check if actor is SUPER_ADMIN
+    if (actor.role !== "SUPER_ADMIN") {
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
+    }
+    // Prevent deleting yourself
+    if (actor.userId === id) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You cannot delete your own account");
+    }
+    const admin = yield user_model_1.User.findById(id);
+    if (!admin) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Admin not found");
+    }
+    // Check if trying to delete another SUPER_ADMIN (only SUPER_ADMIN can delete SUPER_ADMIN)
+    if (admin.role === "SUPER_ADMIN") {
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Cannot delete another Super Admin");
+    }
+    admin.isDeleted = true;
+    yield admin.save();
+    // Remove password from response
+    const adminData = admin.toObject();
+    delete adminData.password;
+    return adminData;
+});
 exports.UserServices = {
     getMe,
     updateMe,
@@ -188,5 +349,9 @@ exports.UserServices = {
     approveInstructor,
     getInstructor,
     getAllInstructors,
-    updateInstructor
+    updateInstructor,
+    getAllStudents,
+    getAllAdmins,
+    createAdmin,
+    deleteAdmin
 };

@@ -23,6 +23,7 @@ const upload_route_1 = require("../modules/upload/upload.route");
 const category_routes_1 = require("../modules/ecom/category/category.routes");
 const product_routes_1 = require("../modules/ecom/product/product.routes");
 const dashboard_routes_1 = require("../modules/dashboard/dashboard.routes");
+const category_routes_2 = require("../modules/category/category.routes");
 exports.router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -40,6 +41,10 @@ const moduleRoutes = [
     {
         path: '/otp',
         route: otp_routes_1.OtpRoutes
+    },
+    {
+        path: '/courses/categories',
+        route: category_routes_2.categoriesRoutes
     },
     {
         path: '/courses',
