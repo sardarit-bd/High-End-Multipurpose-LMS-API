@@ -65,6 +65,15 @@ const getAllInstructors = (0, catchAsync_1.catchAsync)((req, res, next) => __awa
         data: instructors,
     });
 }));
+const getAllStudents = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const instructors = yield user_services_1.UserServices.getAllStudents(req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Students fetched Successfully",
+        data: instructors,
+    });
+}));
 const requestInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const token = req.user;
@@ -104,6 +113,45 @@ const updateInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
         data: updated,
     });
 }));
+const getAllAdmins = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const result = yield user_services_1.UserServices.getAllAdmins(req.query, {
+        userId: token.userId,
+        role: token.role
+    });
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Admins fetched successfully",
+        data: result
+    });
+}));
+const createAdmin = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const result = yield user_services_1.UserServices.createAdmin(req.body, {
+        userId: token.userId,
+        role: token.role
+    });
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.CREATED,
+        success: true,
+        message: "Admin created successfully",
+        data: result
+    });
+}));
+const deleteAdmin = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const result = yield user_services_1.UserServices.deleteAdmin(req.params.id, {
+        userId: token.userId,
+        role: token.role
+    });
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Admin deleted successfully",
+        data: result
+    });
+}));
 exports.userController = {
     createUser,
     getMe,
@@ -112,5 +160,9 @@ exports.userController = {
     approveInstructor,
     getInstructor,
     getAllInstructors,
-    updateInstructor
+    updateInstructor,
+    getAllStudents,
+    getAllAdmins,
+    createAdmin,
+    deleteAdmin
 };

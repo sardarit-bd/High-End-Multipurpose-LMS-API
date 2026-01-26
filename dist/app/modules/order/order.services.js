@@ -361,7 +361,92 @@ const getOrderBySessionId = (sessionId, actor) => __awaiter(void 0, void 0, void
         throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
     return ord;
 });
-const getOrders = () => __awaiter(void 0, void 0, void 0, function* () { return order_model_1.Order.find({ isDeleted: false }).sort({ createdAt: -1 }); });
+const getOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
+    var _a;
+    const { q, page = 1, limit = 10 } = query;
+    // Build aggregation pipeline
+    const pipeline = [
+        {
+            $match: { isDeleted: false }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "userData"
+            }
+        },
+        {
+            $unwind: {
+                path: "$userData",
+                preserveNullAndEmptyArrays: true
+            }
+        }
+    ];
+    // Add search filter if query exists
+    if (q) {
+        pipeline.push({
+            $match: {
+                $or: [
+                    { providerPaymentId: { $regex: q, $options: 'i' } },
+                    { "userData.name": { $regex: q, $options: 'i' } },
+                    { "userData.email": { $regex: q, $options: 'i' } }
+                ]
+            }
+        });
+    }
+    // Add projection and pagination stages
+    pipeline.push({
+        $project: {
+            transactionId: {
+                $cond: {
+                    if: { $and: [{ $ne: ["$providerPaymentId", null] }, { $ne: ["$providerPaymentId", ""] }] },
+                    then: "$providerPaymentId",
+                    else: { $toString: "$_id" }
+                }
+            },
+            userName: "$userData.name",
+            userEmail: "$userData.email",
+            amount: "$price",
+            currency: "$currency",
+            date: "$createdAt",
+            status: "$status",
+            itemType: "$itemType",
+            provider: "$provider",
+            course: 1,
+            ecommerce: 1,
+            createdAt: 1
+        }
+    }, {
+        $sort: { createdAt: -1 }
+    }, {
+        $skip: (page - 1) * limit
+    }, {
+        $limit: limit * 1
+    });
+    // Clone pipeline for count (remove pagination stages)
+    const countPipeline = [...pipeline];
+    countPipeline.splice(-3, 3); // Remove sort, skip, limit stages
+    // Execute queries
+    const [orders, countResult] = yield Promise.all([
+        order_model_1.Order.aggregate(pipeline),
+        order_model_1.Order.aggregate([...countPipeline, { $count: "total" }])
+    ]);
+    const total = ((_a = countResult[0]) === null || _a === void 0 ? void 0 : _a.total) || 0;
+    // Format the data
+    const formattedOrders = orders.map(order => (Object.assign(Object.assign({}, order), { amountFormatted: `${order.amount.toFixed(2)} ${order.currency.toUpperCase()}`, dateFormatted: new Date(order.date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }) })));
+    return {
+        orders: formattedOrders,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+    };
+});
 /* ----------------------- EXPORT ----------------------- */
 exports.OrderServices = {
     createCheckout,

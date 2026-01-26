@@ -102,7 +102,7 @@ const getOrderBySession = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(v
  * 🧾 Admin: Get all orders (global list)
  */
 const getOrders = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const orders = yield order_services_1.OrderServices.getOrders();
+    const orders = yield order_services_1.OrderServices.getOrders(req.query);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.OK,
         success: true,

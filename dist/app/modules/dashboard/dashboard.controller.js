@@ -67,10 +67,21 @@ const getStudentDashboard = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
         data: dashboardData,
     });
 }));
+const getAdminStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const stats = yield dashboard_services_1.DashboardServices.getAdminStats();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Admin stats fetched successfully",
+        data: stats,
+    });
+}));
 exports.DashboardController = {
     getInstructorDashboard,
     getInstructorStats,
     getEarningsChart,
     getCourseStats,
     getStudentDashboard,
+    getAdminStats
 };

@@ -11,11 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DashboardServices = void 0;
 const course_model_1 = require("../course/course.model");
+const user_model_1 = require("../user/user.model");
 const lesson_model_1 = require("../lesson/lesson.model");
 const enrollment_model_1 = require("../enrollment/enrollment.model");
 const order_model_1 = require("../order/order.model");
 const task_model_1 = require("../task/task.model");
 const submission_model_1 = require("../submission/submission.model");
+const user_interface_1 = require("../user/user.interface");
 const getInstructorStats = (instructorId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     // Count live courses
@@ -274,10 +276,100 @@ const getStudentDashboard = (studentId) => __awaiter(void 0, void 0, void 0, fun
         recentEnrollments: enrollments.slice(0, 10),
     };
 });
+const getAdminStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    // Count total unique students (users with role "student")
+    const totalStudents = yield user_model_1.User.countDocuments({
+        role: user_interface_1.Role.STUDENT,
+        isDeleted: false
+    });
+    // Count total instructors (users with role "instructor")
+    const totalInstructors = yield user_model_1.User.countDocuments({
+        role: user_interface_1.Role.INSTRUCTOR,
+        isDeleted: false
+    });
+    // Count total courses
+    const totalCourses = yield course_model_1.Course.countDocuments({
+        isDeleted: false
+    });
+    // Count pending courses (draft status)
+    const pendingCourses = yield course_model_1.Course.countDocuments({
+        status: "draft",
+        isDeleted: false
+    });
+    // Count published courses
+    const publishedCourses = yield course_model_1.Course.countDocuments({
+        status: "published",
+        isDeleted: false
+    });
+    // Calculate total revenue from completed orders
+    const earnings = yield order_model_1.Order.aggregate([
+        {
+            $match: {
+                status: "completed"
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: "$amount" }
+            }
+        }
+    ]);
+    // Get published courses grouped by month
+    let publishedCoursesByMonth = yield course_model_1.Course.aggregate([
+        {
+            $match: {
+                status: "published",
+                isDeleted: false,
+                createdAt: {
+                    $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+                }
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    year: { $year: "$createdAt" },
+                    month: { $month: "$createdAt" }
+                },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $sort: { "_id.year": 1, "_id.month": 1 }
+        }
+    ]);
+    // Generate last 12 months with zeros for missing months
+    const last12Months = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const found = publishedCoursesByMonth.find(item => item._id.year === year && item._id.month === month);
+        last12Months.push({
+            _id: { year, month },
+            count: found ? found.count : 0
+        });
+    }
+    // Replace the original result with the complete 12-month data
+    publishedCoursesByMonth = last12Months;
+    return {
+        totalStudents,
+        totalInstructors,
+        totalCourses,
+        totalRevenue: ((_a = earnings[0]) === null || _a === void 0 ? void 0 : _a.total) || 0,
+        pendingCourses,
+        publishedCourses,
+        publishedCoursesByMonth
+    };
+});
 exports.DashboardServices = {
     getInstructorStats,
     getInstructorDashboard,
     getEarningsChart,
     getCourseStats,
     getStudentDashboard,
+    getAdminStats
 };
