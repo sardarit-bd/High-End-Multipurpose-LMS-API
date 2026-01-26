@@ -425,8 +425,108 @@ const getOrderBySessionId = async (
   return ord;
 };
 
-const getOrders = async () =>
-  Order.find({ isDeleted: false }).sort({ createdAt: -1 });
+const getOrders = async (query:any = {}) => {
+  const { q, page = 1, limit = 10 } = query;
+
+  // Build aggregation pipeline
+  const pipeline:any = [
+    {
+      $match: { isDeleted: false }
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userData"
+      }
+    },
+    {
+      $unwind: {
+        path: "$userData",
+        preserveNullAndEmptyArrays: true
+      }
+    }
+  ];
+
+  // Add search filter if query exists
+  if (q) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { providerPaymentId: { $regex: q, $options: 'i' } },
+          { "userData.name": { $regex: q, $options: 'i' } },
+          { "userData.email": { $regex: q, $options: 'i' } }
+        ]
+      }
+    });
+  }
+
+  // Add projection and pagination stages
+  pipeline.push(
+    {
+      $project: {
+        transactionId: {
+          $cond: {
+            if: { $and: [{ $ne: ["$providerPaymentId", null] }, { $ne: ["$providerPaymentId", ""] }] },
+            then: "$providerPaymentId",
+            else: { $toString: "$_id" }
+          }
+        },
+        userName: "$userData.name",
+        userEmail: "$userData.email",
+        amount: "$price",
+        currency: "$currency",
+        date: "$createdAt",
+        status: "$status",
+        itemType: "$itemType",
+        provider: "$provider",
+        course: 1,
+        ecommerce: 1,
+        createdAt: 1
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: (page - 1) * limit
+    },
+    {
+      $limit: limit * 1
+    }
+  );
+
+  // Clone pipeline for count (remove pagination stages)
+  const countPipeline = [...pipeline];
+  countPipeline.splice(-3, 3); // Remove sort, skip, limit stages
+
+  // Execute queries
+  const [orders, countResult] = await Promise.all([
+    Order.aggregate(pipeline),
+    Order.aggregate([...countPipeline, { $count: "total" }])
+  ]);
+
+  const total = countResult[0]?.total || 0;
+
+  // Format the data
+  const formattedOrders = orders.map(order => ({
+    ...order,
+    amountFormatted: `${order.amount.toFixed(2)} ${order.currency.toUpperCase()}`,
+    dateFormatted: new Date(order.date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }));
+
+  return {
+    orders: formattedOrders,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit)
+  };
+};
 
 /* ----------------------- EXPORT ----------------------- */
 export const OrderServices = {

@@ -78,6 +78,18 @@ const getAllInstructors = catchAsync(
     }
 );
 
+const getAllStudents = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const instructors = await UserServices.getAllStudents(req.query);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Students fetched Successfully",
+            data: instructors,
+        });
+    }
+);
 const requestInstructor = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   const user = await UserServices.requestInstructor(token.userId, req.body?.note);
@@ -123,6 +135,55 @@ const updateInstructor = catchAsync(async (req: Request, res: Response) => {
     data: updated,
   });
 });
+
+const getAllAdmins = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  
+  const result = await UserServices.getAllAdmins(req.query, {
+    userId: token.userId,
+    role: token.role
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Admins fetched successfully",
+    data: result
+  });
+});
+
+const createAdmin = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  
+  const result = await UserServices.createAdmin(req.body, {
+    userId: token.userId,
+    role: token.role
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Admin created successfully",
+    data: result
+  });
+});
+
+const deleteAdmin = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  
+  const result = await UserServices.deleteAdmin(req.params.id, {
+    userId: token.userId,
+    role: token.role
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Admin deleted successfully",
+    data: result
+  });
+});
+
 export const userController = {
     createUser,
     getMe,
@@ -131,5 +192,9 @@ export const userController = {
     approveInstructor,
     getInstructor,
     getAllInstructors,
-    updateInstructor
+    updateInstructor,
+    getAllStudents,
+    getAllAdmins,
+    createAdmin,
+    deleteAdmin
 };

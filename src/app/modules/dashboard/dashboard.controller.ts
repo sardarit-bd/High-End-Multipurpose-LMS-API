@@ -66,10 +66,24 @@ const getStudentDashboard = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getAdminStats = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const stats = await DashboardServices.getAdminStats()
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Admin stats fetched successfully",
+    data: stats,
+  });
+});
+
 export const DashboardController = {
   getInstructorDashboard,
   getInstructorStats,
   getEarningsChart,
   getCourseStats,
   getStudentDashboard,
+  getAdminStats
 };
