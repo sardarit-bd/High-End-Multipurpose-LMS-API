@@ -8,15 +8,28 @@ import { Lesson } from "../lesson/lesson.model";
 import { Unit } from "../unit/unit.model";
 
 const createCourse = async (payload: Omit<ICourse, "slug" | "isDeleted">) => {
+  console.log("Creating course with payload:", payload);
   const course = await Course.create(payload);
   return course.toObject();
 };
 
 const listCourses = async (query: any) => {
-  const filter: FilterQuery<ICourse> = { isDeleted: false };
+  const filter: FilterQuery<ICourse> = {  };
 
-  // 🔍 Full-text search
-  if (query.q) filter.$text = { $search: query.q };
+  
+if(query.q){
+   if (query.q?.length <= 8) {
+    const searchRegex = new RegExp(query.q, 'i');
+    filter.$or = [
+      { title: searchRegex },
+      { description: searchRegex },
+      { category: searchRegex }
+    ];
+  }
+  else {
+    filter.$text = { $search: query.q };
+  }
+}
 
   // 🎯 Category (support single or multiple)
   
@@ -49,8 +62,8 @@ const listCourses = async (query: any) => {
   const skip = (page - 1) * limit;
   const sort = query.sort ?? "-createdAt";
 
-  // ⚡ Fetch items and total count
   console.log(filter)
+  // ⚡ Fetch items and total count
   const [items, total] = await Promise.all([
     Course.find(filter)
       .populate("instructor", "name email") // optional
@@ -60,6 +73,7 @@ const listCourses = async (query: any) => {
     Course.countDocuments(filter),
   ]);
 
+  console.log(items)
   // Calculate lesson count and duration for each course
   const itemsWithStats = await Promise.all(
     items.map(async (course) => {

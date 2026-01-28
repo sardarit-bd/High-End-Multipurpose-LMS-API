@@ -3,6 +3,7 @@ import { IEnrollment } from "./enrollment.interface";
 
 const EnrollmentSchema = new Schema<IEnrollment>({
   user:   { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  instructor: { type: Schema.Types.ObjectId, ref: "User", required: true },
   course: { type: Schema.Types.ObjectId, ref: "Course", required: true, index: true },
   status: { type: String, enum: ["enrolled","completed","dropped"], default: "enrolled" },
   progress: { type: Number, min: 0, max: 100, default: 0 },

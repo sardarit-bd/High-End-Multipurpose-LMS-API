@@ -18,6 +18,7 @@ router.patch("/me", checkAuth(...Object.values(Role)), userController.updateMe);
 router.get("/instructor/:id", userController.getInstructor)
 router.get("/instructor", userController.getAllInstructors)
 router.get("/students", userController.getAllStudents)
+router.get("/expertise", userController.getUniqueExpertise)
 
 
 router.post(

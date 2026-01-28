@@ -12,16 +12,17 @@ const ensureCourse = async (courseId: string) => {
 };
 
 // Idempotent self-enroll (used by payment success)
-const enrollSelf = async (courseId: string, userId: string) => {
+const enrollSelf = async (courseId: string, userId: string, instructor: string) => {
   await ensureCourse(courseId);
   const existing = await Enrollment.findOne({ course: courseId, user: userId });
-  if (existing) return existing;
+  if (existing) throw new AppError(httpStatus.FORBIDDEN, "You Enrolled Before");
 
   const now = new Date();
-  return Enrollment.create({
-    course: courseId, user: userId, status: "enrolled",
+  const res = await Enrollment.create({
+    course: courseId, user: userId, status: "enrolled", instructor: instructor,
     progress: 0, startedAt: now, lastActivityAt: now
   });
+  return res
 };
 
 const getMyEnrollment = async (courseId: string, userId: string) => {

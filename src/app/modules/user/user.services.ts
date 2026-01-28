@@ -93,7 +93,7 @@ const getAllInstructors = async (query: any = {}) => {
   const { q, page = 1, limit = 10 } = query;
 
   // First, find matching users if search query is provided
-  let userIds:any = [];
+  let userIds: any = [];
   if (q) {
     const matchingUsers = await User.find({
       $or: [
@@ -120,6 +120,17 @@ const getAllInstructors = async (query: any = {}) => {
     }
   }
 
+  // Handle expertise filter
+  if (query.expertise) {
+    // Split comma-separated string into array
+    const expertiseArray = query.expertise.split(',').map((exp: string) => exp.trim());
+    
+    // Use $in to match any of the expertise values
+    filter.expertise = { $in: expertiseArray };
+  }
+
+  console.log(filter);
+  
   const instructors = await Instructor.find(filter)
     .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified instructorRequest')
     .sort({ createdAt: -1 })
@@ -281,6 +292,7 @@ const updateInstructor = async (
   updates: Partial<IInstructor & IUser>,
   actor: { userId: string; role: string }
 ) => {
+  console.log(updates)
   const instructor = await Instructor.findOne({userId: id});
   const user = await User.findById(id);
   if (!instructor || !user) throw new AppError(httpStatus.NOT_FOUND, "Instructor Not Found");
@@ -412,6 +424,58 @@ const deleteAdmin = async (
 };
 
 
+const getUniqueExpertise = async (
+  query: any = {}
+) => {
+  const { q, page = 1, limit = 20 } = query;
+
+  // Build aggregation pipeline
+  const pipeline: any[] = [];
+
+  if (q) {
+    pipeline.push({ $match: { expertise: { $regex: q, $options: 'i' } } });
+  }
+
+  pipeline.push(
+    { $unwind: "$expertise" },
+    {
+      $group: {
+        _id: "$expertise",
+        count: { $sum: 1 }
+      }
+    },
+    { $match: { _id: { $ne: null} } },
+    { $sort: { count: -1, _id: 1 } }
+  );
+
+  // Get total count first
+  const totalResult = await Instructor.aggregate([
+    ...pipeline,
+    { $count: "total" }
+  ]);
+  const total = totalResult[0]?.total || 0;
+
+  // Add pagination and get results
+  pipeline.push(
+    { $skip: (page - 1) * limit },
+    { $limit: limit * 1 }
+  );
+
+  const expertise = await Instructor.aggregate(pipeline);
+
+  const transformedExpertise = expertise.map(item => ({
+    _id: item._id,
+    name: item._id,
+    count: item.count
+  }));
+
+  return {
+    expertise: transformedExpertise,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit)
+  };
+};
 export const UserServices = {
     getMe,
     updateMe,
@@ -424,5 +488,6 @@ export const UserServices = {
     getAllStudents,
     getAllAdmins,
     createAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getUniqueExpertise
 };

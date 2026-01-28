@@ -78,6 +78,19 @@ const getAllInstructors = catchAsync(
     }
 );
 
+const getUniqueExpertise = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const instructors = await UserServices.getUniqueExpertise();
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Unique Experties fetched Successfully",
+            data: instructors,
+        });
+    }
+);
+
 const getAllStudents = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const instructors = await UserServices.getAllStudents(req.query);
@@ -196,5 +209,6 @@ export const userController = {
     getAllStudents,
     getAllAdmins,
     createAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getUniqueExpertise
 };
