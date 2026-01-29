@@ -17,10 +17,12 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
 const enrollment_services_1 = require("./enrollment.services");
+const course_model_1 = require("../course/course.model");
 const enrollSelf = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.user;
     const { courseId } = req.params;
-    const doc = yield enrollment_services_1.EnrollmentServices.enrollSelf(courseId, token.userId);
+    const course = yield course_model_1.Course.findById(courseId);
+    const doc = yield enrollment_services_1.EnrollmentServices.enrollSelf(courseId, token.userId, course === null || course === void 0 ? void 0 : course.instructor);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.CREATED, success: true, message: "Enrolled", data: doc });
 }));
 const getMyEnrollment = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -72,4 +74,9 @@ const getUserCoursePoints = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
     const points = yield enrollment_services_1.EnrollmentServices.getUserCoursePoints(courseId, token.userId);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "User course points", data: { points } });
 }));
-exports.enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent, getUserCoursePoints };
+const getEnrolledStudentsByInstructor = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const students = yield enrollment_services_1.EnrollmentServices.getEnrolledStudentsByInstructor(token.userId);
+    (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "User course points", data: students });
+}));
+exports.enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent, getUserCoursePoints, getEnrolledStudentsByInstructor };

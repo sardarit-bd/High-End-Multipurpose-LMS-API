@@ -108,6 +108,7 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
      * ------------------------------------------------------------------ */
     if (order.itemType === "course" && order.course) {
         // Single course purchase
+        console.log(course, course === null || course === void 0 ? void 0 : course.instructor);
         yield enrollment_services_1.EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
         // Optional: auto-award enrollment points
         yield gamification_service_1.GamificationServices.addPoints({
@@ -117,11 +118,17 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
             courseId: String(order.course),
             reason: "Course enrollment",
         });
+        yield course_model_1.Course.findByIdAndUpdate(normalized.courseId, {
+            $inc: { noOfStudents: 1 },
+        }, { new: true });
     }
     else if (order.itemType === "package" && ((_d = order.courseIds) === null || _d === void 0 ? void 0 : _d.length)) {
         // Multiple course package purchase
         for (const courseId of order.courseIds) {
             yield enrollment_services_1.EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
+            yield course_model_1.Course.findByIdAndUpdate(courseId, {
+                $inc: { noOfStudents: 1 },
+            }, { new: true });
         }
         yield gamification_service_1.GamificationServices.addPoints({
             userId: normalized.userId,

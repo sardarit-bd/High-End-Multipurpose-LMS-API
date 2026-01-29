@@ -52,6 +52,7 @@ const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const enrollment_model_1 = require("./enrollment.model");
 const course_model_1 = require("../course/course.model");
 const badge_service_1 = require("../badge/badge.service");
+const mongoose_1 = __importDefault(require("mongoose"));
 const ensureCourse = (courseId) => __awaiter(void 0, void 0, void 0, function* () {
     const course = yield course_model_1.Course.findById(courseId);
     if (!course || course.isDeleted)
@@ -266,7 +267,60 @@ const getUserCoursePoints = (courseId, userId) => __awaiter(void 0, void 0, void
     ]);
     return ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.totalPoints) || 0;
 });
+const getEnrolledStudentsByInstructor = (instructorId) => __awaiter(void 0, void 0, void 0, function* () {
+    const studentsWithPoints = yield enrollment_model_1.Enrollment.aggregate([
+        { $match: { instructor: new mongoose_1.default.Types.ObjectId(instructorId) } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        { $unwind: "$user" },
+        {
+            $lookup: {
+                from: "pointwallets",
+                localField: "user._id",
+                foreignField: "user",
+                as: "pointWallet"
+            }
+        },
+        {
+            $addFields: {
+                points: {
+                    $ifNull: [
+                        { $arrayElemAt: ["$pointWallet", 0] },
+                        { totalPoints: 0, byCourse: {} }
+                    ]
+                }
+            }
+        },
+        {
+            $project: {
+                "user.name": 1,
+                "user.email": 1,
+                "user.picture": 1,
+                status: 1,
+                progress: 1,
+                completedLessons: 1,
+                timeSpent: 1,
+                streak: 1,
+                startedAt: 1,
+                completedAt: 1,
+                lastActivityAt: 1,
+                "points.totalPoints": 1,
+                "points.byCourse": 1
+            }
+        }
+    ]);
+    if (!studentsWithPoints || studentsWithPoints.length === 0) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Enrollment Not Found");
+    }
+    return studentsWithPoints;
+});
 exports.EnrollmentServices = {
     enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent,
-    calculateComprehensiveProgress, getUserCoursePoints,
+    calculateComprehensiveProgress, getUserCoursePoints, getEnrolledStudentsByInstructor
 };

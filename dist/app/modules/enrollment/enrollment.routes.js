@@ -15,4 +15,5 @@ router.patch("/courses/:courseId/enrollments/:enrollmentId/progress", (0, checkA
 router.post("/courses/:courseId/enrollments/:enrollmentId/complete-lesson", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.completeLesson);
 router.patch("/courses/:courseId/enrollments/:enrollmentId/time-spent", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN), enrollment_controller_1.enrollmentController.updateTimeSpent);
 router.get("/courses/:courseId/points/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), enrollment_controller_1.enrollmentController.getUserCoursePoints);
+router.get("/courses/students", (0, checkAuth_1.checkAuth)(user_interface_1.Role.INSTRUCTOR), enrollment_controller_1.enrollmentController.getEnrolledStudentsByInstructor);
 exports.EnrollmentRoutes = router;

@@ -4,6 +4,7 @@ import AppError from "../../errorHelpers/AppError";
 import { Enrollment } from "./enrollment.model";
 import { Course } from "../course/course.model";
 import { BadgeServices } from "../badge/badge.service";
+import mongoose from "mongoose";
 
 const ensureCourse = async (courseId: string) => {
   const course = await Course.findById(courseId);
@@ -254,7 +255,64 @@ const getUserCoursePoints = async (courseId: string, userId: string) => {
   return result[0]?.totalPoints || 0;
 };
 
+
+const getEnrolledStudentsByInstructor = async (instructorId: string) => {
+  
+  const studentsWithPoints = await Enrollment.aggregate([
+    { $match: { instructor: new mongoose.Types.ObjectId(instructorId) } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user"
+      }
+    },
+    { $unwind: "$user" },
+    {
+      $lookup: {
+        from: "pointwallets",
+        localField: "user._id",
+        foreignField: "user",
+        as: "pointWallet"
+      }
+    },
+    {
+      $addFields: {
+        points: {
+          $ifNull: [
+            { $arrayElemAt: ["$pointWallet", 0] },
+            { totalPoints: 0, byCourse: {} }
+          ]
+        }
+      }
+    },
+    {
+      $project: {
+        "user.name": 1,
+        "user.email": 1,
+        "user.picture": 1,
+        status: 1,
+        progress: 1,
+        completedLessons: 1,
+        timeSpent: 1,
+        streak: 1,
+        startedAt: 1,
+        completedAt: 1,
+        lastActivityAt: 1,
+        "points.totalPoints": 1,
+        "points.byCourse": 1
+      }
+    }
+  ]);
+
+  if (!studentsWithPoints || studentsWithPoints.length === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, "Enrollment Not Found");
+  }
+
+  return studentsWithPoints;
+};
 export const EnrollmentServices = {
   enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent,
-  calculateComprehensiveProgress, getUserCoursePoints,
+  calculateComprehensiveProgress, getUserCoursePoints, getEnrolledStudentsByInstructor
 };
