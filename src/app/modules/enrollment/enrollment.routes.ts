@@ -42,4 +42,8 @@ router.get("/courses/:courseId/points/me",
     checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
     enrollmentController.getUserCoursePoints);
 
+router.get("/courses/students",
+    checkAuth(Role.INSTRUCTOR),
+    enrollmentController.getEnrolledStudentsByInstructor);
+
 export const EnrollmentRoutes = router;

@@ -5,11 +5,13 @@ import { JwtPayload } from "jsonwebtoken";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { EnrollmentServices } from "./enrollment.services";
+import { Course } from "../course/course.model";
 
 const enrollSelf = catchAsync(async (req, res) => {
   const token = req.user as JwtPayload;
   const { courseId } = req.params;
-  const doc = await EnrollmentServices.enrollSelf(courseId, token.userId);
+  const course = await Course.findById(courseId)
+  const doc = await EnrollmentServices.enrollSelf(courseId, token.userId, course?.instructor);
   sendResponse(res, { statusCode: httpStatus.CREATED, success: true, message: "Enrolled", data: doc });
 });
 
@@ -70,4 +72,9 @@ const getUserCoursePoints = catchAsync(async (req, res) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "User course points", data: { points } });
 });
 
-export const enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent, getUserCoursePoints };
+const getEnrolledStudentsByInstructor = catchAsync(async (req, res) => {
+  const token = req.user as JwtPayload;
+  const students = await EnrollmentServices.getEnrolledStudentsByInstructor(token.userId);
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "User course points", data: students});
+});
+export const enrollmentController = { enrollSelf, getMyEnrollment, listMyEnrollments, listCourseEnrollments, updateStatus, updateProgress, completeLesson, updateTimeSpent, getUserCoursePoints, getEnrolledStudentsByInstructor };

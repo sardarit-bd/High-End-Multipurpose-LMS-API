@@ -2,6 +2,7 @@ import { Router } from "express";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { DashboardController } from "./dashboard.controller";
+import { getDashboard, getEarningsData, getPendingTasks, getRecentTaskSubmissions, getStats, getTopPerformingCourses } from "./instructor.controller";
 
 const router = Router();
 
@@ -45,4 +46,22 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   DashboardController.getAdminStats
 );
+
+router.get("/dashboard", checkAuth(Role.INSTRUCTOR), getDashboard);
+
+
+router.get("/dashboard/stats",  checkAuth(Role.INSTRUCTOR), getStats);
+
+
+router.get("/dashboard/top-courses", checkAuth(Role.INSTRUCTOR), getTopPerformingCourses);
+
+
+router.get("/dashboard/recent-submissions", checkAuth(Role.INSTRUCTOR), getRecentTaskSubmissions);
+
+router.get("/dashboard/unevaluated-tasks", checkAuth(Role.INSTRUCTOR), getPendingTasks);
+
+
+router.get("/dashboard/monthly-earnings", checkAuth(Role.INSTRUCTOR), getEarningsData);
+
+
 export const DashboardRoutes = router;

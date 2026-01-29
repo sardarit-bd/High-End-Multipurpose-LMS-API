@@ -12,15 +12,15 @@ import { Product } from "../ecom/product/product.model";
 import { Course } from "../course/course.model";
 
 const providers = {
-    stripe: new StripeProvider(),
-    paypal: new PaypalProvider(),
-    toyyibpay: new ToyyibPayProvider()
+  stripe: new StripeProvider(),
+  paypal: new PaypalProvider(),
+  toyyibpay: new ToyyibPayProvider()
 } as const;
 
 const createCheckoutSession = async (input: CreateSessionInput) => {
-    const p = providers[input.provider];
-    if (!p) throw new AppError(httpStatus.BAD_REQUEST, "Unsupported provider");
-    return p.createCheckoutSession(input);
+  const p = providers[input.provider];
+  if (!p) throw new AppError(httpStatus.BAD_REQUEST, "Unsupported provider");
+  return p.createCheckoutSession(input);
 }
 
 // Webhook handlers (normalized)
@@ -40,7 +40,7 @@ const markPaidFromWebhook = async (
 
   // Validate order existence
   const order = await Order.findById(normalized.orderId);
-  const course = await Course.findById( normalized.courseId)
+  const course = await Course.findById(normalized.courseId)
   if (!order) {
     console.error(`❌ Order not found: ${normalized.orderId}`);
     throw new AppError(httpStatus.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -99,12 +99,12 @@ const markPaidFromWebhook = async (
     // 3c. Award purchase points (basic gamification)
     const points = Math.floor((order.amount || 0) / 10); // $10 => 1 point
     if (points > 0) {
-    await GamificationServices.addPoints({
+      await GamificationServices.addPoints({
         userId: String(order.user),
         points,
         sourceType: order.itemType,
         reason: "Store purchase",
-    });
+      });
     }
 
     // 3d. Mark fulfillment pending
@@ -117,6 +117,7 @@ const markPaidFromWebhook = async (
    * ------------------------------------------------------------------ */
   if (order.itemType === "course" && order.course) {
     // Single course purchase
+    console.log(course, course?.instructor)
     await EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
 
     // Optional: auto-award enrollment points
@@ -127,17 +128,31 @@ const markPaidFromWebhook = async (
       courseId: String(order.course),
       reason: "Course enrollment",
     });
+    await Course.findByIdAndUpdate(
+      normalized.courseId,
+      {
+        $inc: { noOfStudents: 1 },
+      },
+      { new: true }
+    );
   } else if (order.itemType === "package" && order.courseIds?.length) {
     // Multiple course package purchase
     for (const courseId of order.courseIds) {
       await EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
+      await Course.findByIdAndUpdate(
+        courseId,
+        {
+          $inc: { noOfStudents: 1 },
+        },
+        { new: true }
+      );
     }
 
     await GamificationServices.addPoints({
-        userId: normalized.userId,
-        points: 50,
-        sourceType: order.itemType,
-        reason: "Package purchase and enrollment",
+      userId: normalized.userId,
+      points: 50,
+      sourceType: order.itemType,
+      reason: "Package purchase and enrollment",
     });
   }
 
@@ -155,6 +170,6 @@ const markPaidFromWebhook = async (
 };
 
 export const PaymentService = {
-    createCheckoutSession,
-    markPaidFromWebhook
+  createCheckoutSession,
+  markPaidFromWebhook
 };
