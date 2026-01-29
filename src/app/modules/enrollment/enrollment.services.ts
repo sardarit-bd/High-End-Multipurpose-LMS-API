@@ -216,6 +216,7 @@ const completeLesson = async (courseId: string, enrollmentId: string, actor: { u
 
   // Calculate comprehensive progress including lessons, tasks, and quizzes
   const progressData = await calculateComprehensiveProgress(courseId, String(enrollment.user));
+  console.log(progressData)
   enrollment.progress = progressData.progress;
 
   enrollment.lastActivityAt = new Date();

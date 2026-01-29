@@ -200,10 +200,9 @@ const createCheckout = async (
 
     // Auto-enroll the user in the free course
     const { EnrollmentServices } = await import('../enrollment/enrollment.services');
-    console.log("instructor", course?.instructor?.toString())
 
      
-    await EnrollmentServices.enrollSelf(courseId, userId, course?.instructor?.toString());
+     await EnrollmentServices.enrollSelf(courseId, userId, course?.instructor?.toString());
 
     // Award enrollment points for free course
     const { GamificationServices } = await import('../gamification/gamification.service');
