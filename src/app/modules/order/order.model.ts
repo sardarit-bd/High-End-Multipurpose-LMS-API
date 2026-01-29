@@ -41,7 +41,7 @@ const OrderSchema = new Schema<IOrder>({
     ecommerce: { type: orderEcommerceSchema },
     price: { type: Number, required: true },
     currency: { type: String, required: true },
-    provider: { type: String, enum: ["stripe", "paypal", "toyyibpay"], required: true },
+    provider: { type: String, required: true },
     providerSessionId: { type: String, index: true },
     providerPaymentId: { type: String, index: true },
     status: { type: String, enum: ["pending", "paid", "failed", "refunded", "canceled"], default: "pending", index: true },

@@ -111,6 +111,14 @@ const getAllInstructors = (...args_1) => __awaiter(void 0, [...args_1], void 0, 
             filter.$or.push({ userId: { $in: userIds } });
         }
     }
+    // Handle expertise filter
+    if (query.expertise) {
+        // Split comma-separated string into array
+        const expertiseArray = query.expertise.split(',').map((exp) => exp.trim());
+        // Use $in to match any of the expertise values
+        filter.expertise = { $in: expertiseArray };
+    }
+    console.log(filter);
     const instructors = yield user_model_1.Instructor.find(filter)
         .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified instructorRequest')
         .sort({ createdAt: -1 })
@@ -248,6 +256,7 @@ const approveInstructor = (targetUserId, actor, payload) => __awaiter(void 0, vo
     return obj;
 });
 const updateInstructor = (id, updates, actor) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(updates);
     const instructor = yield user_model_1.Instructor.findOne({ userId: id });
     const user = yield user_model_1.User.findById(id);
     if (!instructor || !user)
@@ -341,6 +350,41 @@ const deleteAdmin = (id, actor) => __awaiter(void 0, void 0, void 0, function* (
     delete adminData.password;
     return adminData;
 });
+const getUniqueExpertise = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
+    var _a;
+    const { q, page = 1, limit = 20 } = query;
+    // Build aggregation pipeline
+    const pipeline = [];
+    if (q) {
+        pipeline.push({ $match: { expertise: { $regex: q, $options: 'i' } } });
+    }
+    pipeline.push({ $unwind: "$expertise" }, {
+        $group: {
+            _id: "$expertise",
+            count: { $sum: 1 }
+        }
+    }, { $match: { _id: { $ne: null } } }, { $sort: { count: -1, _id: 1 } });
+    // Get total count first
+    const totalResult = yield user_model_1.Instructor.aggregate([
+        ...pipeline,
+        { $count: "total" }
+    ]);
+    const total = ((_a = totalResult[0]) === null || _a === void 0 ? void 0 : _a.total) || 0;
+    // Add pagination and get results
+    pipeline.push({ $skip: (page - 1) * limit }, { $limit: limit * 1 });
+    const expertise = yield user_model_1.Instructor.aggregate(pipeline);
+    const transformedExpertise = expertise.map(item => ({
+        _id: item._id,
+        name: item._id,
+        count: item.count
+    }));
+    return {
+        expertise: transformedExpertise,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+    };
+});
 exports.UserServices = {
     getMe,
     updateMe,
@@ -353,5 +397,6 @@ exports.UserServices = {
     getAllStudents,
     getAllAdmins,
     createAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getUniqueExpertise
 };

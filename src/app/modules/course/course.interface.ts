@@ -21,6 +21,7 @@ export interface ICourse {
 
   awardOnComplete?: Types.ObjectId;
   introVideo?: string;
+   noOfStudents?: number,
 
   createdAt?: Date;
   updatedAt?: Date;

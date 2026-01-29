@@ -180,6 +180,7 @@ const resolvePrice = (course, couponCode) => __awaiter(void 0, void 0, void 0, f
 });
 /* ----------------------- NORMAL COURSE CHECKOUT ----------------------- */
 const createCheckout = (courseId, userId, provider, itemType, couponCode, billingInfo) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const course = yield course_model_1.Course.findById(courseId);
     if (!course || course.isDeleted)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Course Not Found");
@@ -191,15 +192,16 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
             course: courseId,
             price,
             currency,
-            provider: "free", // Special provider for free courses
+            provider: `"free"_${Math.random() * 100 * 100}`, // Special provider for free courses
             itemType,
-            status: "completed", // Mark as completed immediately
+            status: "paid", // Mark as completed immediately
             couponCode,
             billingInfo
         });
         // Auto-enroll the user in the free course
         const { EnrollmentServices } = yield Promise.resolve().then(() => __importStar(require('../enrollment/enrollment.services')));
-        yield EnrollmentServices.enrollSelf(courseId, userId);
+        console.log("instructor", (_a = course === null || course === void 0 ? void 0 : course.instructor) === null || _a === void 0 ? void 0 : _a.toString());
+        yield EnrollmentServices.enrollSelf(courseId, userId, (_b = course === null || course === void 0 ? void 0 : course.instructor) === null || _b === void 0 ? void 0 : _b.toString());
         // Award enrollment points for free course
         const { GamificationServices } = yield Promise.resolve().then(() => __importStar(require('../gamification/gamification.service')));
         yield GamificationServices.addPoints({
@@ -209,7 +211,9 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
             courseId: courseId,
             reason: "Free course enrollment",
         });
-        console.log("Free course enrolled automatically:", { courseId, userId, orderId: order._id });
+        const res = yield course_model_1.Course.findByIdAndUpdate(courseId, {
+            $inc: { noOfStudents: 1 },
+        }, { new: true });
         return {
             orderId: String(order._id),
             checkoutUrl: null, // No payment URL needed for free courses

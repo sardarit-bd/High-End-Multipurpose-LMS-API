@@ -20,15 +20,26 @@ const course_model_1 = require("./course.model");
 const lesson_model_1 = require("../lesson/lesson.model");
 const unit_model_1 = require("../unit/unit.model");
 const createCourse = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Creating course with payload:", payload);
     const course = yield course_model_1.Course.create(payload);
     return course.toObject();
 });
 const listCourses = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
-    const filter = { isDeleted: false };
-    // 🔍 Full-text search
-    if (query.q)
-        filter.$text = { $search: query.q };
+    var _a, _b, _c, _d;
+    const filter = {};
+    if (query.q) {
+        if (((_a = query.q) === null || _a === void 0 ? void 0 : _a.length) <= 8) {
+            const searchRegex = new RegExp(query.q, 'i');
+            filter.$or = [
+                { title: searchRegex },
+                { description: searchRegex },
+                { category: searchRegex }
+            ];
+        }
+        else {
+            filter.$text = { $search: query.q };
+        }
+    }
     // 🎯 Category (support single or multiple)
     if (query.categories) {
         const categories = query.categories.split(",");
@@ -54,12 +65,12 @@ const listCourses = (query) => __awaiter(void 0, void 0, void 0, function* () {
         filter.price = query.isFree ? 0 : { $gt: 0 };
     }
     // 📄 Pagination and Sorting
-    const page = Number((_a = query.page) !== null && _a !== void 0 ? _a : 1);
-    const limit = Number((_b = query.limit) !== null && _b !== void 0 ? _b : 12);
+    const page = Number((_b = query.page) !== null && _b !== void 0 ? _b : 1);
+    const limit = Number((_c = query.limit) !== null && _c !== void 0 ? _c : 12);
     const skip = (page - 1) * limit;
-    const sort = (_c = query.sort) !== null && _c !== void 0 ? _c : "-createdAt";
-    // ⚡ Fetch items and total count
+    const sort = (_d = query.sort) !== null && _d !== void 0 ? _d : "-createdAt";
     console.log(filter);
+    // ⚡ Fetch items and total count
     const [items, total] = yield Promise.all([
         course_model_1.Course.find(filter)
             .populate("instructor", "name email") // optional
@@ -68,6 +79,7 @@ const listCourses = (query) => __awaiter(void 0, void 0, void 0, function* () {
             .limit(limit),
         course_model_1.Course.countDocuments(filter),
     ]);
+    console.log(items);
     // Calculate lesson count and duration for each course
     const itemsWithStats = yield Promise.all(items.map((course) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;

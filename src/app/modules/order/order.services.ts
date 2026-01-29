@@ -183,7 +183,6 @@ const createCheckout = async (
     throw new AppError(httpStatus.NOT_FOUND, "Course Not Found");
 
   const { price, currency } = await resolvePrice(course, couponCode);
-
   // Handle free courses - auto-complete order and enroll
   if (price === 0) {
     const order = await Order.create({
@@ -191,16 +190,20 @@ const createCheckout = async (
       course: courseId,
       price,
       currency,
-      provider: "free", // Special provider for free courses
+      provider: `"free"_${Math.random() * 100 * 100}`, // Special provider for free courses
       itemType,
-      status: "completed", // Mark as completed immediately
+      status: "paid", // Mark as completed immediately
       couponCode,
       billingInfo
     });
 
+
     // Auto-enroll the user in the free course
     const { EnrollmentServices } = await import('../enrollment/enrollment.services');
-    await EnrollmentServices.enrollSelf(courseId, userId);
+    console.log("instructor", course?.instructor?.toString())
+
+     
+    await EnrollmentServices.enrollSelf(courseId, userId, course?.instructor?.toString());
 
     // Award enrollment points for free course
     const { GamificationServices } = await import('../gamification/gamification.service');
@@ -212,7 +215,14 @@ const createCheckout = async (
       reason: "Free course enrollment",
     });
 
-    console.log("Free course enrolled automatically:", { courseId, userId, orderId: order._id });
+
+    const res = await Course.findByIdAndUpdate(
+      courseId,
+      {
+        $inc: { noOfStudents: 1 },
+      },
+      { new: true }
+    );
 
     return {
       orderId: String(order._id),
@@ -306,7 +316,7 @@ type ClientEcomInput = {
 
 const startEcommerceCheckoutFromClient = async (input: ClientEcomInput) => {
   const items = input.items ?? [];
-  
+
   if (!items.length)
     throw new AppError(httpStatus.BAD_REQUEST, "No items found to checkout");
 
@@ -361,7 +371,7 @@ const startEcommerceCheckoutFromClient = async (input: ClientEcomInput) => {
     source: "ecommerce",
     price: total,
     itemType: "ecommerce",
-    
+
     currency: input.currency || "USD",
     ecommerce: {
       items: verifiedLines,
@@ -425,11 +435,11 @@ const getOrderBySessionId = async (
   return ord;
 };
 
-const getOrders = async (query:any = {}) => {
+const getOrders = async (query: any = {}) => {
   const { q, page = 1, limit = 10 } = query;
 
   // Build aggregation pipeline
-  const pipeline:any = [
+  const pipeline: any = [
     {
       $match: { isDeleted: false }
     },

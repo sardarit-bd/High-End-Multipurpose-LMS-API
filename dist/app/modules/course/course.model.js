@@ -7,6 +7,7 @@ const CourseSchema = new mongoose_1.Schema({
     slug: { type: String, unique: true, index: true },
     description: { type: String, default: "" },
     price: { type: Number, default: 0 },
+    noOfStudents: { type: Number, default: 0 },
     level: { type: String, enum: ["beginner", "intermediate", "advanced"], default: "beginner" },
     category: { type: String, index: true },
     thumbnail: { type: String },
@@ -25,3 +26,4 @@ CourseSchema.pre("save", function (next) {
     next();
 });
 exports.Course = mongoose_1.models.Course || (0, mongoose_1.model)("Course", CourseSchema);
+exports.Course.createIndexes();

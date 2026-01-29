@@ -22,6 +22,7 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const gamification_service_1 = require("../gamification/gamification.service");
 const product_model_1 = require("../ecom/product/product.model");
+const course_model_1 = require("../course/course.model");
 const providers = {
     stripe: new stripe_1.StripeProvider(),
     paypal: new paypal_1.PaypalProvider(),
@@ -39,6 +40,7 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
     // Validate order existence
     const order = yield order_model_1.Order.findById(normalized.orderId);
+    const course = yield course_model_1.Course.findById(normalized.courseId);
     if (!order) {
         console.error(`❌ Order not found: ${normalized.orderId}`);
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -106,7 +108,7 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
      * ------------------------------------------------------------------ */
     if (order.itemType === "course" && order.course) {
         // Single course purchase
-        yield enrollment_services_1.EnrollmentServices.enrollSelf(String(order.course), normalized.userId);
+        yield enrollment_services_1.EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
         // Optional: auto-award enrollment points
         yield gamification_service_1.GamificationServices.addPoints({
             userId: normalized.userId,
@@ -119,7 +121,7 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     else if (order.itemType === "package" && ((_d = order.courseIds) === null || _d === void 0 ? void 0 : _d.length)) {
         // Multiple course package purchase
         for (const courseId of order.courseIds) {
-            yield enrollment_services_1.EnrollmentServices.enrollSelf(String(courseId), normalized.userId);
+            yield enrollment_services_1.EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
         }
         yield gamification_service_1.GamificationServices.addPoints({
             userId: normalized.userId,

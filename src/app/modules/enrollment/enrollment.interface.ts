@@ -6,6 +6,7 @@ export interface IEnrollment {
   _id?: Types.ObjectId;
   user: Types.ObjectId;
   course: Types.ObjectId;
+  instructor: Types.ObjectId;
 
   status: EnrollmentStatus; // enrolled|completed|dropped
   progress: number;         // 0..100

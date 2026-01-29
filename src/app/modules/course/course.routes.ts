@@ -8,7 +8,6 @@ import {
   updateCourseZodSchema,
   listCourseQueryZodSchema,
 } from "./course.validation";
-import { checkEnrollment } from "../../middlewares/checkEnrollment";
 
 const router = Router();
 

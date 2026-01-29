@@ -6,11 +6,14 @@ const CourseSchema = new Schema<ICourse>(
     slug: { type: String, unique: true, index: true },
     description: { type: String, default: "" },
     price: { type: Number, default: 0 },
+      noOfStudents: { type: Number, default: 0 },
     level: { type: String, enum: ["beginner", "intermediate", "advanced"], default: "beginner" },
     category: { type: String, index: true },
     thumbnail: { type: String },
     introVideo: { type: String },
     tags: [{ type: String }],
+
+  
 
     instructor: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
@@ -32,3 +35,4 @@ CourseSchema.pre("save", function (next) {
 });
 
 export const Course = models.Course || model<ICourse>("Course", CourseSchema);
+Course.createIndexes()

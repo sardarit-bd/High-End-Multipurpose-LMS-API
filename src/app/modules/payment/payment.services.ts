@@ -9,6 +9,7 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { GamificationServices } from "../gamification/gamification.service";
 import { Product } from "../ecom/product/product.model";
+import { Course } from "../course/course.model";
 
 const providers = {
     stripe: new StripeProvider(),
@@ -39,6 +40,7 @@ const markPaidFromWebhook = async (
 
   // Validate order existence
   const order = await Order.findById(normalized.orderId);
+  const course = await Course.findById( normalized.courseId)
   if (!order) {
     console.error(`❌ Order not found: ${normalized.orderId}`);
     throw new AppError(httpStatus.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -115,7 +117,7 @@ const markPaidFromWebhook = async (
    * ------------------------------------------------------------------ */
   if (order.itemType === "course" && order.course) {
     // Single course purchase
-    await EnrollmentServices.enrollSelf(String(order.course), normalized.userId);
+    await EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
 
     // Optional: auto-award enrollment points
     await GamificationServices.addPoints({
@@ -128,7 +130,7 @@ const markPaidFromWebhook = async (
   } else if (order.itemType === "package" && order.courseIds?.length) {
     // Multiple course package purchase
     for (const courseId of order.courseIds) {
-      await EnrollmentServices.enrollSelf(String(courseId), normalized.userId);
+      await EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
     }
 
     await GamificationServices.addPoints({
