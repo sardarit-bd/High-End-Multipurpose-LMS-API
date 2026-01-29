@@ -65,6 +65,15 @@ const getAllInstructors = (0, catchAsync_1.catchAsync)((req, res, next) => __awa
         data: instructors,
     });
 }));
+const getUniqueExpertise = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const instructors = yield user_services_1.UserServices.getUniqueExpertise();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Unique Experties fetched Successfully",
+        data: instructors,
+    });
+}));
 const getAllStudents = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const instructors = yield user_services_1.UserServices.getAllStudents(req.query);
     (0, sendResponse_1.sendResponse)(res, {
@@ -164,5 +173,6 @@ exports.userController = {
     getAllStudents,
     getAllAdmins,
     createAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getUniqueExpertise
 };

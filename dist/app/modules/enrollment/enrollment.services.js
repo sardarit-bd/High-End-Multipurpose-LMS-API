@@ -59,16 +59,17 @@ const ensureCourse = (courseId) => __awaiter(void 0, void 0, void 0, function* (
     return course;
 });
 // Idempotent self-enroll (used by payment success)
-const enrollSelf = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+const enrollSelf = (courseId, userId, instructor) => __awaiter(void 0, void 0, void 0, function* () {
     yield ensureCourse(courseId);
     const existing = yield enrollment_model_1.Enrollment.findOne({ course: courseId, user: userId });
     if (existing)
-        return existing;
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "You Enrolled Before");
     const now = new Date();
-    return enrollment_model_1.Enrollment.create({
-        course: courseId, user: userId, status: "enrolled",
+    const res = yield enrollment_model_1.Enrollment.create({
+        course: courseId, user: userId, status: "enrolled", instructor: instructor,
         progress: 0, startedAt: now, lastActivityAt: now
     });
+    return res;
 });
 const getMyEnrollment = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     yield ensureCourse(courseId);

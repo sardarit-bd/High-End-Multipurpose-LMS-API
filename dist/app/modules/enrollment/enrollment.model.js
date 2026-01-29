@@ -4,6 +4,7 @@ exports.Enrollment = void 0;
 const mongoose_1 = require("mongoose");
 const EnrollmentSchema = new mongoose_1.Schema({
     user: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    instructor: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
     course: { type: mongoose_1.Schema.Types.ObjectId, ref: "Course", required: true, index: true },
     status: { type: String, enum: ["enrolled", "completed", "dropped"], default: "enrolled" },
     progress: { type: Number, min: 0, max: 100, default: 0 },

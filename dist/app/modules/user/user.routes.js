@@ -14,6 +14,7 @@ router.patch("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1
 router.get("/instructor/:id", user_controller_1.userController.getInstructor);
 router.get("/instructor", user_controller_1.userController.getAllInstructors);
 router.get("/students", user_controller_1.userController.getAllStudents);
+router.get("/expertise", user_controller_1.userController.getUniqueExpertise);
 router.post("/request-instructor", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT), // allow student; instructors/admins will be rejected by service if already
 user_controller_1.userController.requestInstructor);
 /** Admin: approve/reject request (and promote to instructor) */
