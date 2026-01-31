@@ -7,39 +7,39 @@ import { envVars } from "../../config/env";
 
 const createUser = async (payload: Partial<IUser>) => {
 
-    const { email, password, ...rest } = payload;
+  const { email, password, ...rest } = payload;
 
-    const isUserExist = await User.findOne({ email });
+  const isUserExist = await User.findOne({ email });
 
-    if (isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
-    }
-    const hashPassword = await bcryptjs.hash(
-        password as string,
-        Number(envVars.BCRYPT_SALT_ROUND)
-    );
+  if (isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
+  }
+  const hashPassword = await bcryptjs.hash(
+    password as string,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
 
-    const authProvider: IAuthProvider = {
-        provider: "credentials",
-        providerId: email as string,
-    };
+  const authProvider: IAuthProvider = {
+    provider: "credentials",
+    providerId: email as string,
+  };
 
-    const user = await User.create({
-        email,
-        password: hashPassword,
-        auths: [authProvider],
-        ...rest,
-    });
+  const user = await User.create({
+    email,
+    password: hashPassword,
+    auths: [authProvider],
+    ...rest,
+  });
 
-    if(user.role === Role.INSTRUCTOR){
-      const inst = await Instructor.create({
-        userId: user._id
-      })
-    }
+  if (user.role === Role.INSTRUCTOR) {
+    const inst = await Instructor.create({
+      userId: user._id
+    })
+  }
 
-    const userObj = user.toObject();
-    delete userObj.password;
-    return userObj;
+  const userObj = user.toObject();
+  delete userObj.password;
+  return userObj;
 };
 const getMe = async (userId: string) => {
   const user = await User.findById(userId).select("-password");
@@ -50,16 +50,40 @@ const getMe = async (userId: string) => {
 
   return user;
 };
+const getStudentProfile = async (userId: string) => {
+  const student = await User.findById(userId)
+    .populate('city', 'name country')
+    .populate('school', 'name code address')
+    .select("-password -auths");
+
+  if (!student || student.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, "Student not found");
+  }
+
+  if (student.role !== Role.STUDENT) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is not a student");
+  }
+
+  return student;
+};
 
 const updateMe = async (userId: string, payload: Partial<IUser>) => {
   const user = await User.findById(userId);
+  console.log("payload", payload)
 
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
   }
 
-  // Only allow updating certain fields
+  // For student role, allow additional fields
   const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture', 'gender', 'dob'];
+
+  // Add student-specific fields if user is a student
+  if (user.role === Role.STUDENT) {
+    allowedFields.push('dateOfBirth', 'gender', 'city', 'school', 'grade', 'interests', 'goals');
+    allowedFields.push('socialLinks');
+  }
+
   const updates: Partial<IUser> = {};
 
   for (const field of allowedFields) {
@@ -68,14 +92,35 @@ const updateMe = async (userId: string, payload: Partial<IUser>) => {
     }
   }
 
-  const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
+  // Handle socialLinks update
+  if (payload.socialLinks) {
+    updates.socialLinks = {
+      ...user.socialLinks,
+      ...payload.socialLinks
+    };
+  }
+
+  console.log(updates)
+  if (!updates.city) {
+    delete updates.city;
+    // Or set to null: updateData.city = null;
+  }
+
+  if (!updates.school) {
+    delete updates.school;
+    // Or set to null: updateData.school = null;
+  }
+  const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true })
+    .select("-password -auths")
+    .populate('city', 'name country')
+    .populate('school', 'name code address');
 
   return updatedUser;
 };
 
 const getInstructor = async (id: string) => {
   // Try to find instructor by userId first, then by instructor document _id if not found
-  let instructor = await Instructor.findOne({userId: id}).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
+  let instructor = await Instructor.findOne({ userId: id }).populate('userId', 'name email picture intro phone socialLinks createdAt isVerified')
 
   // If not found by userId, try finding by instructor document _id
   if (!instructor) {
@@ -101,7 +146,7 @@ const getAllInstructors = async (query: any = {}) => {
         { email: { $regex: q, $options: 'i' } }
       ]
     }).select('_id');
-    
+
     userIds = matchingUsers.map(user => user._id);
   }
 
@@ -113,7 +158,7 @@ const getAllInstructors = async (query: any = {}) => {
     filter.$or = [
       { designation: { $regex: q, $options: 'i' } }
     ];
-    
+
     // Only add userId search if we found matching users
     if (userIds.length > 0) {
       filter.$or.push({ userId: { $in: userIds } });
@@ -124,13 +169,13 @@ const getAllInstructors = async (query: any = {}) => {
   if (query.expertise) {
     // Split comma-separated string into array
     const expertiseArray = query.expertise.split(',').map((exp: string) => exp.trim());
-    
+
     // Use $in to match any of the expertise values
     filter.expertise = { $in: expertiseArray };
   }
 
   console.log(filter);
-  
+
   const instructors = await Instructor.find(filter)
     .populate('userId', 'name email picture intro phone socialLinks createdAt isVerified instructorRequest')
     .sort({ createdAt: -1 })
@@ -185,9 +230,27 @@ const getAllStudents = async (query: any = {}) => {
       }
     },
     {
+      $lookup: {
+        from: "cities",
+        localField: "city",
+        foreignField: "_id",
+        as: "cityInfo"
+      }
+    },
+    {
+      $lookup: {
+        from: "schools",
+        localField: "school",
+        foreignField: "_id",
+        as: "schoolInfo"
+      }
+    },
+    {
       $addFields: {
         totalEnrolledCourses: { $size: "$enrollments" },
         points: { $ifNull: [{ $arrayElemAt: ["$pointWallet.totalPoints", 0] }, 0] },
+        city: { $arrayElemAt: ["$cityInfo", 0] },
+        school: { $arrayElemAt: ["$schoolInfo", 0] },
         joinedDate: "$createdAt"
       }
     },
@@ -196,10 +259,26 @@ const getAllStudents = async (query: any = {}) => {
         name: 1,
         email: 1,
         picture: 1,
+        phone: 1,
+        gender: 1,
+        grade: 1,
+        interests: 1,
+        dateOfBirth: 1,
         totalEnrolledCourses: 1,
         points: 1,
         joinedDate: 1,
-        createdAt: 1
+        createdAt: 1,
+        city: {
+          _id: 1,
+          name: 1,
+          country: 1
+        },
+        school: {
+          _id: 1,
+          name: 1,
+          code: 1,
+          address: 1
+        }
       }
     },
     {
@@ -260,7 +339,7 @@ const approveInstructor = async (
   const now = new Date();
 
   if (payload.action === "approve") {
-    user.role = Role.INSTRUCTOR; 
+    user.role = Role.INSTRUCTOR;
     user.instructorRequest = {
       status: "approved",
       note: payload.note,
@@ -293,7 +372,7 @@ const updateInstructor = async (
   actor: { userId: string; role: string }
 ) => {
   console.log(updates)
-  const instructor = await Instructor.findOne({userId: id});
+  const instructor = await Instructor.findOne({ userId: id });
   const user = await User.findById(id);
   if (!instructor || !user) throw new AppError(httpStatus.NOT_FOUND, "Instructor Not Found");
 
@@ -320,7 +399,7 @@ const getAllAdmins = async (
   }
 
   const { q, page = 1, limit = 10 } = query;
- 
+
   const filter: any = {
     role: { $in: ['SUPER_ADMIN', 'ADMIN'] },
     isDeleted: false
@@ -350,7 +429,7 @@ const getAllAdmins = async (
 };
 
 const createAdmin = async (
-  data : Partial<IInstructor & IUser>,
+  data: Partial<IInstructor & IUser>,
   actor: { userId: string; role: string }
 ) => {
   // Check if actor is SUPER_ADMIN
@@ -359,7 +438,7 @@ const createAdmin = async (
   }
 
   const { name, email, password, role } = data;
-  
+
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -367,9 +446,9 @@ const createAdmin = async (
   }
 
   const hashedPassword = await bcryptjs.hash(
-        password as string,
-        Number(envVars.BCRYPT_SALT_ROUND)
-    );
+    password as string,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
   // Create new admin user
   const newAdmin = new User({
     name,
@@ -390,7 +469,7 @@ const createAdmin = async (
 
 const deleteAdmin = async (
   id: string,
-  actor:  { userId: string; role: string }
+  actor: { userId: string; role: string }
 ) => {
   // Check if actor is SUPER_ADMIN
   if (actor.role !== "SUPER_ADMIN") {
@@ -444,7 +523,7 @@ const getUniqueExpertise = async (
         count: { $sum: 1 }
       }
     },
-    { $match: { _id: { $ne: null} } },
+    { $match: { _id: { $ne: null } } },
     { $sort: { count: -1, _id: 1 } }
   );
 
@@ -477,17 +556,18 @@ const getUniqueExpertise = async (
   };
 };
 export const UserServices = {
-    getMe,
-    updateMe,
-    createUser,
-    requestInstructor,
-    approveInstructor,
-    getInstructor,
-    getAllInstructors,
-    updateInstructor,
-    getAllStudents,
-    getAllAdmins,
-    createAdmin,
-    deleteAdmin,
-    getUniqueExpertise
+  getMe,
+  updateMe,
+  createUser,
+  requestInstructor,
+  approveInstructor,
+  getInstructor,
+  getAllInstructors,
+  updateInstructor,
+  getAllStudents,
+  getAllAdmins,
+  createAdmin,
+  deleteAdmin,
+  getUniqueExpertise,
+  getStudentProfile
 };

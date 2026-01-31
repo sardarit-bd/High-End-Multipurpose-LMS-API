@@ -36,6 +36,16 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0,
         data: user,
     });
 }));
+const getStudentProfile = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const student = yield user_services_1.UserServices.getStudentProfile(id);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Student profile fetched successfully",
+        data: student,
+    });
+}));
 const updateMe = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const verifiedToken = req.user;
     const user = yield user_services_1.UserServices.updateMe(verifiedToken.userId, req.body);
@@ -174,5 +184,6 @@ exports.userController = {
     getAllAdmins,
     createAdmin,
     deleteAdmin,
-    getUniqueExpertise
+    getUniqueExpertise,
+    getStudentProfile
 };

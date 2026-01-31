@@ -76,7 +76,7 @@ const markAttendance = (eventId, userId) => __awaiter(void 0, void 0, void 0, fu
             reason: `Attended event: ${event.title.en || "Event"}`
         });
     }
-    yield badge_service_1.BadgeServices.autoIssueBadge({ userId, eventId: String(event._id) });
+    yield badge_service_1.BadgeServices.autoIssueBadge({ userId, totalPoints: 0, eventId: String(event._id) });
     return { message: "Attendance confirmed and points added", event };
 });
 exports.EventServices = {

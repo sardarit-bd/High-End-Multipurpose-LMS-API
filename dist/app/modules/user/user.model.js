@@ -53,6 +53,33 @@ const userSchema = new mongoose_1.Schema({
     address: {
         type: String
     },
+    // Add student-specific fields
+    dateOfBirth: {
+        type: Date
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other', 'prefer-not-to-say']
+    },
+    city: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'City',
+        default: null
+    },
+    school: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'School',
+        default: null
+    },
+    grade: {
+        type: String
+    },
+    interests: [{
+            type: String
+        }],
+    goals: {
+        type: String
+    },
     socialLinks: {
         facebook: { type: String },
         twitter: { type: String },

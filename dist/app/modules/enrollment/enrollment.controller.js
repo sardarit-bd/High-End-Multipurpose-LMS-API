@@ -44,8 +44,8 @@ const listCourseEnrollments = (0, catchAsync_1.catchAsync)((req, res) => __await
 }));
 const updateStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.user;
-    const { courseId, enrollmentId } = req.params;
-    const doc = yield enrollment_services_1.EnrollmentServices.updateStatus(courseId, enrollmentId, { userId: token.userId, role: token.role }, req.body.status);
+    console.log(req.body);
+    const doc = yield enrollment_services_1.EnrollmentServices.updateStatus({ userId: token.userId, role: token.role }, req.body);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Status updated", data: doc });
 }));
 const updateProgress = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

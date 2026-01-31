@@ -132,7 +132,8 @@ const issueBadge = async (userId: string, badgeId: string, reason?: string) => {
 const listUserBadges = async (userId: string) => {
   return UserBadge.find({ user: userId })
     .populate("badge")
-    .sort({ issuedAt: -1 });
+    .sort({ issuedAt: -1 })
+    .populate('')
 };
 
 /** helper: auto-issue by course/event **/
@@ -142,11 +143,9 @@ const autoIssueBadge = async (context: { userId: string; totalPoints: number, co
   //   badge = await Badge.findOne({ courseId: context.courseId, type: "course", isActive: true });
   // else if (context.eventId)
   //   badge = await Badge.findOne({ eventId: context.eventId, type: "event", isActive: true });
-  console.log("context", context)
-  const badge = await getBadgeByPoints(context.totalPoints)
-  console.log(badge)
+  const badge: any = await getBadgeByPoints(context.totalPoints)
   if (badge) {
-    await issueBadge(context.userId, String(badge._id), "Auto-issued for completion");
+    await issueBadge(context.userId, String(badge?._id), "Auto-issued for completion");
   }
 };
 

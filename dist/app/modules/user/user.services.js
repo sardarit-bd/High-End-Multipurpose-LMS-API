@@ -58,20 +58,55 @@ const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return user;
 });
+const getStudentProfile = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const student = yield user_model_1.User.findById(userId)
+        .populate('city', 'name country')
+        .populate('school', 'name code address')
+        .select("-password -auths");
+    if (!student || student.isDeleted) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Student not found");
+    }
+    if (student.role !== user_interface_1.Role.STUDENT) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User is not a student");
+    }
+    return student;
+});
 const updateMe = (userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(userId);
+    console.log("payload", payload);
     if (!user) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
     }
-    // Only allow updating certain fields
+    // For student role, allow additional fields
     const allowedFields = ['name', 'phone', 'organization', 'region', 'intro', 'address', 'picture', 'gender', 'dob'];
+    // Add student-specific fields if user is a student
+    if (user.role === user_interface_1.Role.STUDENT) {
+        allowedFields.push('dateOfBirth', 'gender', 'city', 'school', 'grade', 'interests', 'goals');
+        allowedFields.push('socialLinks');
+    }
     const updates = {};
     for (const field of allowedFields) {
         if (payload[field] !== undefined) {
             updates[field] = payload[field];
         }
     }
-    const updatedUser = yield user_model_1.User.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
+    // Handle socialLinks update
+    if (payload.socialLinks) {
+        updates.socialLinks = Object.assign(Object.assign({}, user.socialLinks), payload.socialLinks);
+    }
+    console.log(updates);
+    if (!updates.city) {
+        delete updates.city;
+        // Or set to null: updateData.city = null;
+    }
+    if (!updates.school) {
+        delete updates.school;
+        // Or set to null: updateData.school = null;
+    }
+    const updatedUser = yield user_model_1.User.findByIdAndUpdate(userId, updates, { new: true })
+        .select("-password -auths")
+        .populate('city', 'name country')
+        .populate('school', 'name code address');
     return updatedUser;
 });
 const getInstructor = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -167,9 +202,27 @@ const getAllStudents = (...args_1) => __awaiter(void 0, [...args_1], void 0, fun
             }
         },
         {
+            $lookup: {
+                from: "cities",
+                localField: "city",
+                foreignField: "_id",
+                as: "cityInfo"
+            }
+        },
+        {
+            $lookup: {
+                from: "schools",
+                localField: "school",
+                foreignField: "_id",
+                as: "schoolInfo"
+            }
+        },
+        {
             $addFields: {
                 totalEnrolledCourses: { $size: "$enrollments" },
                 points: { $ifNull: [{ $arrayElemAt: ["$pointWallet.totalPoints", 0] }, 0] },
+                city: { $arrayElemAt: ["$cityInfo", 0] },
+                school: { $arrayElemAt: ["$schoolInfo", 0] },
                 joinedDate: "$createdAt"
             }
         },
@@ -178,10 +231,26 @@ const getAllStudents = (...args_1) => __awaiter(void 0, [...args_1], void 0, fun
                 name: 1,
                 email: 1,
                 picture: 1,
+                phone: 1,
+                gender: 1,
+                grade: 1,
+                interests: 1,
+                dateOfBirth: 1,
                 totalEnrolledCourses: 1,
                 points: 1,
                 joinedDate: 1,
-                createdAt: 1
+                createdAt: 1,
+                city: {
+                    _id: 1,
+                    name: 1,
+                    country: 1
+                },
+                school: {
+                    _id: 1,
+                    name: 1,
+                    code: 1,
+                    address: 1
+                }
             }
         },
         {
@@ -398,5 +467,6 @@ exports.UserServices = {
     getAllAdmins,
     createAdmin,
     deleteAdmin,
-    getUniqueExpertise
+    getUniqueExpertise,
+    getStudentProfile
 };

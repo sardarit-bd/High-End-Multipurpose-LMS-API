@@ -15,6 +15,7 @@ router.post(
 );
 router.get("/me", checkAuth(...Object.values(Role)), userController.getMe);
 router.patch("/me", checkAuth(...Object.values(Role)), userController.updateMe);
+router.get("/students/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.STUDENT), userController.getStudentProfile);
 router.get("/instructor/:id", userController.getInstructor)
 router.get("/instructor", userController.getAllInstructors)
 router.get("/students", userController.getAllStudents)

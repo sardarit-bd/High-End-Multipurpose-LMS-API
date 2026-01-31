@@ -24,6 +24,8 @@ const category_routes_1 = require("../modules/ecom/category/category.routes");
 const product_routes_1 = require("../modules/ecom/product/product.routes");
 const dashboard_routes_1 = require("../modules/dashboard/dashboard.routes");
 const category_routes_2 = require("../modules/category/category.routes");
+const city_routes_1 = require("../modules/city/city.routes");
+const school_routes_1 = require("../modules/school/school.routes");
 exports.router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -85,6 +87,14 @@ const moduleRoutes = [
     {
         path: '/payment',
         route: payment_routes_1.PaymentRoutes
+    },
+    {
+        path: '/cities',
+        route: city_routes_1.cityRoutes,
+    },
+    {
+        path: '/schools',
+        route: school_routes_1.schoolRoutes,
     },
     {
         path: '/packages',

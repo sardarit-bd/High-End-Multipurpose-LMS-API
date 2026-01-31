@@ -52,7 +52,15 @@ export interface IUser {
         instagram?: string;
         github?: string;
         website?: string;
-    }
+    };
+    // Add student-specific fields
+    dateOfBirth?: Date;
+    gender?: 'male' | 'female' | 'other' | 'prefer-not-to-say';
+    city?: Types.ObjectId;
+    school?: Types.ObjectId;
+    grade?: string;
+    interests?: string[];
+    goals?: string;
 }
 
 export interface IInstructor {
