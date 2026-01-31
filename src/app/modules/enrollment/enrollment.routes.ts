@@ -22,7 +22,7 @@ router.get("/courses/:courseId/enrollments",
     checkAuth(Role.INSTRUCTOR, Role.ADMIN),
     enrollmentController.listCourseEnrollments);
 
-router.patch("/courses/:courseId/enrollments/:enrollmentId/status",
+router.patch("/courses/enrollments/status",
     checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
     enrollmentController.updateStatus);
 

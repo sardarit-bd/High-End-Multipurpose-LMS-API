@@ -37,8 +37,8 @@ const listCourseEnrollments = catchAsync(async (req, res) => {
 
 const updateStatus = catchAsync(async (req, res) => {
   const token = req.user as JwtPayload;
-  const { courseId, enrollmentId } = req.params;
-  const doc = await EnrollmentServices.updateStatus(courseId, enrollmentId, { userId: token.userId, role: token.role }, req.body.status);
+  console.log(req.body)
+  const doc = await EnrollmentServices.updateStatus({ userId: token.userId, role: token.role }, req.body);
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Status updated", data: doc });
 });
 

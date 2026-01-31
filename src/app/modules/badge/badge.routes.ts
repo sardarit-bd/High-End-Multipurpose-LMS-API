@@ -20,7 +20,7 @@ router.patch(
 );
 
 router.delete(
-  "/badges/:badgeId",
+  "/:badgeId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   badgeController.remove
 );
