@@ -6,9 +6,6 @@ const badgeSchema = new Schema<IBadge>(
     title: { type: String, required: true },
     description: { type: String },
     image: { type: String },
-    type: { type: String, enum: ["course", "event", "custom"], required: true },
-    courseId: { type: Schema.Types.ObjectId, ref: "Course" },
-    eventId: { type: Schema.Types.ObjectId, ref: "Event" },
     pointsRequired: { type: Number },
     isActive: { type: Boolean, default: true }
   },

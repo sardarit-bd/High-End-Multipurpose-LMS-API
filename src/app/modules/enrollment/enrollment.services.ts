@@ -5,6 +5,7 @@ import { Enrollment } from "./enrollment.model";
 import { Course } from "../course/course.model";
 import { BadgeServices } from "../badge/badge.service";
 import mongoose from "mongoose";
+import { JwtPayload } from "jsonwebtoken";
 
 const ensureCourse = async (courseId: string) => {
   const course = await Course.findById(courseId);
@@ -45,11 +46,11 @@ const listCourseEnrollments = async (courseId: string, actor: { userId: string; 
 };
 
 const updateStatus = async (
-  courseId: string,
-  enrollmentId: string,
   actor: { userId: string; role: string },
-  status: "enrolled" | "completed" | "dropped"
+  payload: JwtPayload
 ) => {
+  const {courseId, enrollmentId, status, totalPoints} = payload
+
   const course = await ensureCourse(courseId);
   const enrollment = await Enrollment.findOne({
     _id: enrollmentId,
@@ -70,16 +71,17 @@ const updateStatus = async (
     enrollment.progress = 100;
 
     // Get total points earned in this course
-    const { TaskSubmission } = await import("../submission/submission.model");
-    const totalPointsResult = await TaskSubmission.aggregate([
-      { $match: { course: courseId, user: enrollment.user } },
-      { $group: { _id: null, totalPoints: { $sum: "$pointsAwarded" } } }
-    ]);
+    // const { TaskSubmission } = await import("../submission/submission.model");
+    // const totalPointsResult = await TaskSubmission.aggregate([
+    //   { $match: { course: courseId, user: enrollment.user } },
+    //   { $group: { _id: null, totalPoints: { $sum: "$pointsAwarded" } } }
+    // ]);
 
-    const totalPoints = totalPointsResult[0]?.totalPoints || 0;
-    console.log(`🎓 Course completed! User ${enrollment.user} earned ${totalPoints} points in course ${courseId}`);
+    // const totalPoints = totalPointsResult[0]?.totalPoints || 0;
+    // console.log(`🎓 Course completed! User ${enrollment.user} earned ${totalPoints} points in course ${courseId}`);
 
     await BadgeServices.autoIssueBadge({
+      totalPoints: totalPoints,
       userId: String(enrollment.user),
       courseId: String(courseId)
     });
