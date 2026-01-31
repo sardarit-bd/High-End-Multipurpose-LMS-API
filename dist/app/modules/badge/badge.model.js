@@ -6,9 +6,6 @@ const badgeSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     description: { type: String },
     image: { type: String },
-    type: { type: String, enum: ["course", "event", "custom"], required: true },
-    courseId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Course" },
-    eventId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Event" },
     pointsRequired: { type: Number },
     isActive: { type: Boolean, default: true }
 }, { timestamps: true, versionKey: false });

@@ -34,7 +34,19 @@ const getMe = catchAsync(
         });
     }
 );
+const getStudentProfile = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const { id } = req.params;
+        const student = await UserServices.getStudentProfile(id);
 
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Student profile fetched successfully",
+            data: student,
+        });
+    }
+);
 const updateMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const verifiedToken = req.user as JwtPayload;
@@ -210,5 +222,6 @@ export const userController = {
     getAllAdmins,
     createAdmin,
     deleteAdmin,
-    getUniqueExpertise
+    getUniqueExpertise,
+    getStudentProfile
 };

@@ -180,7 +180,7 @@ const resolvePrice = (course, couponCode) => __awaiter(void 0, void 0, void 0, f
 });
 /* ----------------------- NORMAL COURSE CHECKOUT ----------------------- */
 const createCheckout = (courseId, userId, provider, itemType, couponCode, billingInfo) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     const course = yield course_model_1.Course.findById(courseId);
     if (!course || course.isDeleted)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Course Not Found");
@@ -200,8 +200,7 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
         });
         // Auto-enroll the user in the free course
         const { EnrollmentServices } = yield Promise.resolve().then(() => __importStar(require('../enrollment/enrollment.services')));
-        console.log("instructor", (_a = course === null || course === void 0 ? void 0 : course.instructor) === null || _a === void 0 ? void 0 : _a.toString());
-        yield EnrollmentServices.enrollSelf(courseId, userId, (_b = course === null || course === void 0 ? void 0 : course.instructor) === null || _b === void 0 ? void 0 : _b.toString());
+        yield EnrollmentServices.enrollSelf(courseId, userId, (_a = course === null || course === void 0 ? void 0 : course.instructor) === null || _a === void 0 ? void 0 : _a.toString());
         // Award enrollment points for free course
         const { GamificationServices } = yield Promise.resolve().then(() => __importStar(require('../gamification/gamification.service')));
         yield GamificationServices.addPoints({

@@ -22,6 +22,8 @@ import { CategoryRoutes } from "../modules/ecom/category/category.routes";
 import { ProductRoutes } from "../modules/ecom/product/product.routes";
 import { DashboardRoutes } from "../modules/dashboard/dashboard.routes";
 import { categoriesRoutes } from "../modules/category/category.routes";
+import { cityRoutes } from "../modules/city/city.routes";
+import { schoolRoutes } from "../modules/school/school.routes";
 
 
 export const router = Router()
@@ -83,9 +85,17 @@ const moduleRoutes = [
         path: '/orders',
         route: OrderRoutes
     },
-    {     
+    {
         path: '/payment',
-        route: PaymentRoutes   
+        route: PaymentRoutes
+    },
+    {
+        path: '/cities',
+        route: cityRoutes,
+    },
+    {
+        path: '/schools',
+        route: schoolRoutes,
     },
     {
         path: '/packages',

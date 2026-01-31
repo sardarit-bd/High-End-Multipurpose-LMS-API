@@ -88,8 +88,8 @@ const listCourseEnrollments = (courseId, actor) => __awaiter(void 0, void 0, voi
         throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Forbidden");
     return enrollment_model_1.Enrollment.find({ course: courseId, isDeleted: false }).populate("user").sort({ createdAt: -1 });
 });
-const updateStatus = (courseId, enrollmentId, actor, status) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+const updateStatus = (actor, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const { courseId, enrollmentId, status, totalPoints } = payload;
     const course = yield ensureCourse(courseId);
     const enrollment = yield enrollment_model_1.Enrollment.findOne({
         _id: enrollmentId,
@@ -108,14 +108,15 @@ const updateStatus = (courseId, enrollmentId, actor, status) => __awaiter(void 0
         enrollment.completedAt = new Date();
         enrollment.progress = 100;
         // Get total points earned in this course
-        const { TaskSubmission } = yield Promise.resolve().then(() => __importStar(require("../submission/submission.model")));
-        const totalPointsResult = yield TaskSubmission.aggregate([
-            { $match: { course: courseId, user: enrollment.user } },
-            { $group: { _id: null, totalPoints: { $sum: "$pointsAwarded" } } }
-        ]);
-        const totalPoints = ((_a = totalPointsResult[0]) === null || _a === void 0 ? void 0 : _a.totalPoints) || 0;
-        console.log(`🎓 Course completed! User ${enrollment.user} earned ${totalPoints} points in course ${courseId}`);
+        // const { TaskSubmission } = await import("../submission/submission.model");
+        // const totalPointsResult = await TaskSubmission.aggregate([
+        //   { $match: { course: courseId, user: enrollment.user } },
+        //   { $group: { _id: null, totalPoints: { $sum: "$pointsAwarded" } } }
+        // ]);
+        // const totalPoints = totalPointsResult[0]?.totalPoints || 0;
+        // console.log(`🎓 Course completed! User ${enrollment.user} earned ${totalPoints} points in course ${courseId}`);
         yield badge_service_1.BadgeServices.autoIssueBadge({
+            totalPoints: totalPoints,
             userId: String(enrollment.user),
             courseId: String(courseId)
         });
@@ -236,6 +237,7 @@ const completeLesson = (courseId, enrollmentId, actor, lessonId) => __awaiter(vo
     }
     // Calculate comprehensive progress including lessons, tasks, and quizzes
     const progressData = yield calculateComprehensiveProgress(courseId, String(enrollment.user));
+    console.log(progressData);
     enrollment.progress = progressData.progress;
     enrollment.lastActivityAt = new Date();
     yield enrollment.save();
