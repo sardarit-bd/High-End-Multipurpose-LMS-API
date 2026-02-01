@@ -7,6 +7,9 @@ const router = Router();
 
 router.get("/me", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), gamificationController.getMyPoints);
 router.get("/leaderboard", gamificationController.getLeaderboard); // public/global
+router.get("/leaderboard/schools", gamificationController.getSchoolsLeaderboard); // schools ranking
+router.get("/leaderboard/cities", gamificationController.getCitiesLeaderboard); // cities ranking
+router.get("/rank", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), gamificationController.getMyRank);
 
 // optional manual award
 router.post(
