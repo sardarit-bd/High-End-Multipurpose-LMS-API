@@ -72,6 +72,16 @@ const getMyTaskSubmission = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
         data: submission,
     });
 }));
+const getMyAllSubmissions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    const submission = yield submission_services_1.SubmissionServices.getMyAllSubmission(token.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "My All submission",
+        data: submission,
+    });
+}));
 const getSubmissionsForReview = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.user;
     const { taskId } = req.params;
@@ -113,5 +123,6 @@ exports.submissionController = {
     getMyTaskSubmission,
     getSubmissionsForReview,
     reviewSubmission,
-    getSubmissionsByUnit
+    getSubmissionsByUnit,
+    getMyAllSubmissions
 };

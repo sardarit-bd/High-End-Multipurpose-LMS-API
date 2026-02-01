@@ -343,7 +343,10 @@ const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, vo
     return { sessionId, checkoutUrl };
 });
 /* ----------------------- ORDERS FETCHING ----------------------- */
-const getMyOrders = (userId) => __awaiter(void 0, void 0, void 0, function* () { return order_model_1.Order.find({ user: userId, isDeleted: false }).sort({ createdAt: -1 }); });
+const getMyOrders = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const orders = yield order_model_1.Order.find({ user: userId, isDeleted: false }).sort({ createdAt: -1 });
+    return orders;
+});
 const getOrderById = (orderId, actor) => __awaiter(void 0, void 0, void 0, function* () {
     const ord = yield order_model_1.Order.findById(orderId);
     if (!ord)

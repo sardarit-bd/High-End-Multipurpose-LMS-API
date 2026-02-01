@@ -8,6 +8,11 @@ import { submissionController } from "./submission.controller";
 const router = Router();
 
 /** STUDENT creates submission for video/pdf */
+router.get(
+  "/me",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  submissionController.getMyAllSubmissions
+);
 router.post(
   "/:taskId/create",
   checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),

@@ -173,6 +173,16 @@ const getMyTaskSubmission = (taskId, userId) => __awaiter(void 0, void 0, void 0
     }).populate('task', 'title type maxPoints').lean();
     return submission;
 });
+const getMyAllSubmission = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const submission = yield submission_model_1.TaskSubmission.find({
+        user: userId,
+    })
+        .populate('task', 'title maxPoints')
+        .populate('course', 'title')
+        .select('task course status reviewNote pointsAwarded')
+        .lean();
+    return submission;
+});
 const getSubmissionsForReview = (taskId, instructorId) => __awaiter(void 0, void 0, void 0, function* () {
     const task = yield task_model_1.Task.findById(taskId);
     if (!task || task.isDeleted)
@@ -329,4 +339,5 @@ exports.SubmissionServices = {
     getSubmissionsForReview,
     reviewSubmission,
     getSubmissionsByUnit,
+    getMyAllSubmission
 };

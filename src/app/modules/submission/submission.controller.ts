@@ -81,6 +81,19 @@ const getMyTaskSubmission = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyAllSubmissions = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+
+  const submission = await SubmissionServices.getMyAllSubmission(token.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My All submission",
+    data: submission,
+  });
+});
+
 const getSubmissionsForReview = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
   const { taskId } = req.params;
@@ -137,5 +150,6 @@ export const submissionController = {
   getMyTaskSubmission,
   getSubmissionsForReview,
   reviewSubmission,
-  getSubmissionsByUnit
+  getSubmissionsByUnit,
+  getMyAllSubmissions
 };
