@@ -7,6 +7,7 @@ const user_interface_1 = require("../user/user.interface");
 const submission_controller_1 = require("./submission.controller");
 const router = (0, express_1.Router)();
 /** STUDENT creates submission for video/pdf */
+router.get("/me", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), submission_controller_1.submissionController.getMyAllSubmissions);
 router.post("/:taskId/create", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), 
 //   validateRequest(createReviewedSubmissionZod),
 submission_controller_1.submissionController.createReviewedSubmission);

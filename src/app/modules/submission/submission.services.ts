@@ -192,6 +192,17 @@ const getMyTaskSubmission = async (taskId: string, userId: string) => {
   return submission;
 };
 
+const getMyAllSubmission = async (userId: string) => {
+  const submission = await TaskSubmission.find({
+    user: userId,
+  })
+    .populate('task', 'title maxPoints')
+    .populate('course', 'title')
+    .select('task course status reviewNote pointsAwarded')
+    .lean();
+
+  return submission;
+};
 const getSubmissionsForReview = async (taskId: string, instructorId: string) => {
   const task = await Task.findById(taskId);
   if (!task || task.isDeleted) throw new AppError(httpStatus.NOT_FOUND, "Task Not Found");
@@ -367,4 +378,5 @@ export const SubmissionServices = {
   getSubmissionsForReview,
   reviewSubmission,
   getSubmissionsByUnit,
+  getMyAllSubmission
 };

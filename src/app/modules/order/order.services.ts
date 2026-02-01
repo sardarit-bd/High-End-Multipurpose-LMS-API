@@ -401,8 +401,10 @@ const startEcommerceCheckoutFromClient = async (input: ClientEcomInput) => {
 };
 
 /* ----------------------- ORDERS FETCHING ----------------------- */
-const getMyOrders = async (userId: string) =>
-  Order.find({ user: userId, isDeleted: false }).sort({ createdAt: -1 });
+const getMyOrders = async (userId: string) =>{
+  const orders = await Order.find({ user: userId, isDeleted: false }).sort({ createdAt: -1 });
+  return orders
+}
 
 const getOrderById = async (
   orderId: string,
