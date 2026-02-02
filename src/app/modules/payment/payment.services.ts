@@ -40,7 +40,10 @@ const markPaidFromWebhook = async (
 
   // Validate order existence
   const order = await Order.findById(normalized.orderId);
-  const course = await Course.findById(normalized.courseId)
+  let course
+  if (normalized.courseId) {
+    course = await Course.findById(normalized.courseId)
+  }
   if (!order) {
     console.error(`❌ Order not found: ${normalized.orderId}`);
     throw new AppError(httpStatus.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -76,20 +79,13 @@ const markPaidFromWebhook = async (
   /* --------------------------------------------------------------------
    * 🛍️ HANDLE ECOMMERCE ORDER
    * ------------------------------------------------------------------ */
-  if (order.source === "ecommerce" && order.ecommerce?.items?.length) {
+  if (order.itemType === "ecommerce" && order.ecommerce?.items?.length) {
     // 3a. Decrement product stock
     for (const item of order.ecommerce.items) {
       const prod: any = await Product.findById(item.product);
       if (!prod) continue;
 
-      if (item.variantId && Array.isArray(prod.variants)) {
-        const idx = prod.variants.findIndex((v: any) => String(v._id) === String(item.variantId));
-        if (idx >= 0) {
-          prod.variants[idx].stock = Math.max(0, (prod.variants[idx].stock || 0) - item.qty);
-        }
-      } else {
-        prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
-      }
+      prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
       await prod.save();
     }
 

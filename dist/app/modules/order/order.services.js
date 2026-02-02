@@ -272,8 +272,10 @@ const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, fu
     return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 });
 const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    const items = (_a = input.items) !== null && _a !== void 0 ? _a : [];
+    var _a, _b, _c, _d, _e, _f;
+    console.log(input);
+    const items = (_b = (_a = input === null || input === void 0 ? void 0 : input.payload) === null || _a === void 0 ? void 0 : _a.items) !== null && _b !== void 0 ? _b : [];
+    console.log(items);
     if (!items.length)
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "No items found to checkout");
     const verifiedLines = [];
@@ -283,37 +285,31 @@ const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, vo
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Product not available");
         let effectivePrice = prod.price;
         let effectiveStock = prod.stock;
-        if (line.variantId && Array.isArray(prod.variants) && prod.variants.length) {
-            const v = prod.variants.find((vv) => String(vv._id) === String(line.variantId));
-            if (!v)
-                throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Variant not found");
-            effectivePrice = typeof v.price === "number" ? v.price : prod.price;
-            effectiveStock = v.stock;
-        }
         if (effectiveStock < line.qty) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient stock");
         }
-        if (line.unitPrice !== effectivePrice) {
+        if (line.price !== effectivePrice) {
             // Protect from tampered FE prices
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Price mismatch. Refresh page.");
         }
         verifiedLines.push({
             product: prod._id,
-            variantId: line.variantId,
-            qty: line.qty,
+            qty: line.quantity,
             unitPrice: effectivePrice,
             title: line.title || prod.title,
-            image: line.image || ((_b = prod.images) === null || _b === void 0 ? void 0 : _b[0]),
+            image: line.image || ((_c = prod.images) === null || _c === void 0 ? void 0 : _c[0]),
         });
     }
+    console.log(verifiedLines);
     const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
     const discount = 0;
     const shippingFee = 0;
-    const tax = 0;
-    const total = subtotal - discount + shippingFee + tax;
+    const tax = .1;
+    const total = subtotal - discount + shippingFee + (subtotal - discount + shippingFee) * tax;
+    console.log(total);
     const order = yield order_model_1.Order.create({
         user: input.userId,
-        provider: "stripe",
+        provider: (_d = input === null || input === void 0 ? void 0 : input.payload) === null || _d === void 0 ? void 0 : _d.provider,
         status: "pending",
         source: "ecommerce",
         price: total,
@@ -326,15 +322,15 @@ const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, vo
             shippingFee,
             tax,
             total,
-            shippingAddress: input.shippingAddress,
+            shippingAddress: (_e = input === null || input === void 0 ? void 0 : input.payload) === null || _e === void 0 ? void 0 : _e.shippingAddress,
             fulfillment: { status: "unfulfilled" },
         },
     });
     const { sessionId, checkoutUrl } = yield payment_services_1.PaymentService.createCheckoutSession({
-        provider: "stripe",
+        provider: (_f = input === null || input === void 0 ? void 0 : input.payload) === null || _f === void 0 ? void 0 : _f.provider,
         source: "ecommerce",
         orderId: String(order._id),
-        amount: total,
+        amount: total * 100,
         currency: input.currency || "USD",
         userId: input.userId,
     });

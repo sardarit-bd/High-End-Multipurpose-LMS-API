@@ -8,5 +8,6 @@ const router = Router();
 router.post("/", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), ProductController.createProduct);
 router.get("/", ProductController.listProducts);
 router.get("/:slug", ProductController.getProduct);
+router.put("/:slug", ProductController.updateProduct);
 
 export const ProductRoutes = router;

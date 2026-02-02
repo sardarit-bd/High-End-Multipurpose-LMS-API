@@ -22,8 +22,14 @@ const createProduct = (payload) => __awaiter(void 0, void 0, void 0, function* (
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Product slug already exists");
     return product_model_1.Product.create(payload);
 });
+const updateProduct = (slug, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const exist = yield product_model_1.Product.findOne({ slug: slug });
+    if (!exist)
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Product does not exists");
+    return product_model_1.Product.findOneAndUpdate({ slug: slug }, payload);
+});
 const listProducts = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const filter = { isActive: true };
+    const filter = {};
     if (query.category)
         filter.category = query.category;
     if (query.q)
@@ -38,9 +44,9 @@ const listProducts = (query) => __awaiter(void 0, void 0, void 0, function* () {
     return product_model_1.Product.find(filter).sort(sort).limit(Number(query.limit) || 50).populate("category");
 });
 const getProduct = (slug) => __awaiter(void 0, void 0, void 0, function* () {
-    const product = yield product_model_1.Product.findOne({ slug, isActive: true }).populate("category");
+    const product = yield product_model_1.Product.findOne({ slug });
     if (!product)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Product not found");
     return product;
 });
-exports.ProductServices = { createProduct, listProducts, getProduct };
+exports.ProductServices = { createProduct, listProducts, getProduct, updateProduct };

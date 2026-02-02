@@ -1,5 +1,6 @@
 import { model, Schema } from "mongoose";
-import { IProduct } from "./product.interface";;
+import { IProduct } from "./product.interface";import { string } from "zod";
+;
 
 const variantSchema = new Schema({
   name: String,
@@ -13,13 +14,12 @@ const productSchema = new Schema<IProduct>({
   title: { type: Schema.Types.Mixed, required: true },
   slug: { type: String, required: true, unique: true },
   description: String,
-  category: String,
+  category: { type: Schema.Types.ObjectId, ref: "CourseCategory", required: true},
   images: [String],
   type: { type: String, enum: ["physical","digital"], default: "physical" },
   price: Number,
   compareAtPrice: Number,
-  sku: String,
-  variants: [variantSchema],
+  featuredImage: String,
   stock: { type: Number, default: 0 },
   attributes: Schema.Types.Mixed,
   shippingRequired: { type: Boolean, default: true },

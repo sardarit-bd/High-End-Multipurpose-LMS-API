@@ -40,7 +40,10 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
     // Validate order existence
     const order = yield order_model_1.Order.findById(normalized.orderId);
-    const course = yield course_model_1.Course.findById(normalized.courseId);
+    let course;
+    if (normalized.courseId) {
+        course = yield course_model_1.Course.findById(normalized.courseId);
+    }
     if (!order) {
         console.error(`❌ Order not found: ${normalized.orderId}`);
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -70,21 +73,13 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     /* --------------------------------------------------------------------
      * 🛍️ HANDLE ECOMMERCE ORDER
      * ------------------------------------------------------------------ */
-    if (order.source === "ecommerce" && ((_c = (_b = order.ecommerce) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.length)) {
+    if (order.itemType === "ecommerce" && ((_c = (_b = order.ecommerce) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.length)) {
         // 3a. Decrement product stock
         for (const item of order.ecommerce.items) {
             const prod = yield product_model_1.Product.findById(item.product);
             if (!prod)
                 continue;
-            if (item.variantId && Array.isArray(prod.variants)) {
-                const idx = prod.variants.findIndex((v) => String(v._id) === String(item.variantId));
-                if (idx >= 0) {
-                    prod.variants[idx].stock = Math.max(0, (prod.variants[idx].stock || 0) - item.qty);
-                }
-            }
-            else {
-                prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
-            }
+            prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
             yield prod.save();
         }
         // 3b. (Optional) clear frontend cart if stored server-side

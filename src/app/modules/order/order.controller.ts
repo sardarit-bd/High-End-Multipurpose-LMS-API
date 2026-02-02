@@ -36,13 +36,10 @@ const createCheckout = catchAsync(async (req: Request, res: Response) => {
  */
 const checkoutEcommerce = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const { items, shippingAddress, currency } = req.body;
 
   const session = await OrderServices.startEcommerceCheckoutFromClient({
     userId: token.userId,
-    items,
-    shippingAddress,
-    currency: currency || "USD",
+   payload: req.body
   });
 
   sendResponse(res, {

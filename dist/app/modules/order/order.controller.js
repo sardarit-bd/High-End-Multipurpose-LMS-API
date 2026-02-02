@@ -37,12 +37,9 @@ const createCheckout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
  */
 const checkoutEcommerce = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.user;
-    const { items, shippingAddress, currency } = req.body;
     const session = yield order_services_1.OrderServices.startEcommerceCheckoutFromClient({
         userId: token.userId,
-        items,
-        shippingAddress,
-        currency: currency || "USD",
+        payload: req.body
     });
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.OK,
