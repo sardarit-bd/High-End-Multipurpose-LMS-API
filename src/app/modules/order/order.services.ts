@@ -523,7 +523,8 @@ const getOrders = async (query: any = {}) => {
         provider: "$provider",
         course: 1,
         ecommerce: 1,
-        createdAt: 1
+        createdAt: 1,
+        fund: 1
       }
     },
     {
