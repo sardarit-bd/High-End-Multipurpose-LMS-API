@@ -329,14 +329,6 @@ const startEcommerceCheckoutFromClient = async (input: ClientEcomInput) => {
     let effectivePrice = prod.price;
     let effectiveStock = prod.stock;
 
-    if (line.variantId && Array.isArray(prod.variants) && prod.variants.length) {
-      const v = prod.variants.find(
-        (vv: any) => String(vv._id) === String(line.variantId)
-      );
-      if (!v) throw new AppError(httpStatus.BAD_REQUEST, "Variant not found");
-      effectivePrice = typeof v.price === "number" ? v.price : prod.price;
-      effectiveStock = v.stock;
-    }
 
     if (effectiveStock < line.qty) {
       throw new AppError(httpStatus.BAD_REQUEST, "Insufficient stock");

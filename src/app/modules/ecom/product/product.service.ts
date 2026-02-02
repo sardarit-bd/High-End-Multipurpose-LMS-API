@@ -8,8 +8,16 @@ const createProduct = async (payload: any) => {
   return Product.create(payload);
 };
 
+
+const updateProduct = async (slug:string, payload: any) => {
+  const exist = await Product.findOne({ slug: slug });
+  if (!exist) throw new AppError(httpStatus.BAD_REQUEST, "Product does not exists");
+  return Product.findOneAndUpdate({slug: slug}, payload);
+};
+
+
 const listProducts = async (query: any) => {
-  const filter: any = { isActive: true };
+  const filter: any = {  };
   if (query.category) filter.category = query.category;
   if (query.q) filter["title"] = new RegExp(query.q, "i");
 
@@ -22,9 +30,9 @@ const listProducts = async (query: any) => {
 };
 
 const getProduct = async (slug: string) => {
-  const product = await Product.findOne({ slug, isActive: true }).populate("category");
+  const product = await Product.findOne({ slug});
   if (!product) throw new AppError(httpStatus.NOT_FOUND, "Product not found");
   return product;
 };
 
-export const ProductServices = { createProduct, listProducts, getProduct };
+export const ProductServices = { createProduct, listProducts, getProduct, updateProduct };

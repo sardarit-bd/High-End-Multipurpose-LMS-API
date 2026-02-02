@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export interface IProductVariant {
   name: string;
   sku?: string;
@@ -10,15 +12,16 @@ export interface IProduct {
   title: string;
   slug: string;
   description?: string;
-  category: string;
+  category: Types.ObjectId;
   images: string[];
+  featuredImage: string;
   type: "physical" | "digital";
   price: number;
   compareAtPrice?: number;
-  sku?: string;
-  variants?: IProductVariant[];
+  // sku?: string;
+  // variants?: IProductVariant[];
   stock: number;
-  attributes?: Record<string, string>;
+  attributes?: string[]
   shippingRequired: boolean;
   digitalUrl?: string;
   isActive: boolean;
