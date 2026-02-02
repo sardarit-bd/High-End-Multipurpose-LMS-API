@@ -246,6 +246,30 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
     yield order.save();
     return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 });
+const createDonationCheckout = (fund, userId, provider, amount) => __awaiter(void 0, void 0, void 0, function* () {
+    // Handle paid courses - create payment session
+    const order = yield order_model_1.Order.create({
+        user: userId,
+        fund: fund,
+        price: amount,
+        currency: "USD",
+        provider,
+        itemType: "Donation",
+        status: "pending",
+    });
+    const session = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider,
+        orderId: String(order._id),
+        amount: amount * 100,
+        currency: 'USD',
+        userId: String(userId),
+        source: "event"
+    });
+    console.log("Created checkout session:", session);
+    order.providerSessionId = session.sessionId;
+    yield order.save();
+    return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+});
 /* ----------------------- PACKAGE CHECKOUT ----------------------- */
 const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, function* () {
     const order = yield order_model_1.Order.create({
@@ -460,4 +484,5 @@ exports.OrderServices = {
     updateEcommerceTracking,
     markEcommerceDelivered,
     cancelOrder,
+    createDonationCheckout
 };

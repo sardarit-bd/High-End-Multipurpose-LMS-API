@@ -262,6 +262,40 @@ const createCheckout = async (
   return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 };
 
+const createDonationCheckout = async (
+  fund: string,
+  userId: string,
+  provider: "stripe" | "paypal" | "toyyibpay",
+  amount: number
+) => {
+
+
+  // Handle paid courses - create payment session
+  const order = await Order.create({
+    user: userId,
+    fund: fund,
+    price: amount,
+    currency: "USD",
+    provider,
+    itemType: "Donation",
+    status: "pending",
+  });
+
+  const session = await PaymentService.createCheckoutSession({
+    provider,
+    orderId: String(order._id),
+    amount: amount * 100,
+    currency: 'USD',
+    userId: String(userId),
+    source: "event"
+  });
+
+  console.log("Created checkout session:", session);
+  order.providerSessionId = session.sessionId;
+  await order.save();
+
+  return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+};
 /* ----------------------- PACKAGE CHECKOUT ----------------------- */
 const createCheckoutForPackage = async (input: {
   packageId: string;
@@ -548,4 +582,5 @@ export const OrderServices = {
   updateEcommerceTracking,
   markEcommerceDelivered,
   cancelOrder,
+  createDonationCheckout
 };

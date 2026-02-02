@@ -30,6 +30,25 @@ const createCheckout = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createDonationCheckout = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  const { provider, fund, amount } = req.body;
+
+  const data = await OrderServices.createDonationCheckout(
+    fund,
+    token?.userId,
+    provider,
+    amount
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Checkout created successfully",
+    data,
+  });
+});
+
 /**
  * 🛒 Checkout for eCommerce (client-provided cart)
  * - Body: { items: [...], shippingAddress: {...}, currency?: "USD" }
@@ -39,7 +58,7 @@ const checkoutEcommerce = catchAsync(async (req: Request, res: Response) => {
 
   const session = await OrderServices.startEcommerceCheckoutFromClient({
     userId: token.userId,
-   payload: req.body
+    payload: req.body
   });
 
   sendResponse(res, {
@@ -196,4 +215,5 @@ export const orderController = {
   updateTracking,
   markDelivered,
   cancelOrder,
+  createDonationCheckout
 };

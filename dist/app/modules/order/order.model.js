@@ -4,7 +4,6 @@ exports.Order = void 0;
 const mongoose_1 = require("mongoose");
 const orderEcommerceItemSchema = new mongoose_1.Schema({
     product: { type: mongoose_1.Schema.Types.ObjectId, ref: "Product" },
-    variantId: { type: mongoose_1.Schema.Types.ObjectId },
     qty: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
     title: { type: mongoose_1.Schema.Types.Mixed, required: true },
@@ -31,9 +30,10 @@ const orderEcommerceSchema = new mongoose_1.Schema({
 }, { _id: false, versionKey: false });
 const OrderSchema = new mongoose_1.Schema({
     user: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    itemType: { type: String, enum: ["course", "package", "event", "ecommerce"], required: true },
+    itemType: { type: String, enum: ["course", "package", "event", "ecommerce", "Donation"], required: true },
     package: { id: { type: String }, name: { type: mongoose_1.Schema.Types.Mixed } },
     course: { type: String },
+    fund: { type: String },
     courseIds: [{ type: String }],
     billingInfo: { type: Object },
     ecommerce: { type: orderEcommerceSchema },
