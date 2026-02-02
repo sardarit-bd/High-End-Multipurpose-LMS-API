@@ -21,6 +21,11 @@ const createProduct = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 
     const data = yield product_service_1.ProductServices.createProduct(req.body);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.CREATED, success: true, message: "Product created", data });
 }));
+const updateProduct = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const slug = req.params.slug;
+    const data = yield product_service_1.ProductServices.updateProduct(slug, req.body);
+    (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.CREATED, success: true, message: "Product updated", data });
+}));
 const listProducts = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield product_service_1.ProductServices.listProducts(req.query);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Product list", data });
@@ -29,4 +34,4 @@ const getProduct = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
     const data = yield product_service_1.ProductServices.getProduct(req.params.slug);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Product detail", data });
 }));
-exports.ProductController = { createProduct, listProducts, getProduct };
+exports.ProductController = { createProduct, listProducts, getProduct, updateProduct };

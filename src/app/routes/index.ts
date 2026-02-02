@@ -117,10 +117,10 @@ const moduleRoutes = [
         path: "/upload",
         route: UploadRoutes
     },
-    {
-        path: "/ecom/categories",
-        route: CategoryRoutes
-    },
+    // {
+    //     path: "/ecom/categories",
+    //     route: CategoryRoutes
+    // },
     {
         path: "/ecom/products",
         route: ProductRoutes

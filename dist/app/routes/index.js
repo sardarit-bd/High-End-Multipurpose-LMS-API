@@ -20,10 +20,9 @@ const event_route_1 = require("../modules/event/event.route");
 const gamification_routes_1 = require("../modules/gamification/gamification.routes");
 const badge_routes_1 = require("../modules/badge/badge.routes");
 const upload_route_1 = require("../modules/upload/upload.route");
-const category_routes_1 = require("../modules/ecom/category/category.routes");
 const product_routes_1 = require("../modules/ecom/product/product.routes");
 const dashboard_routes_1 = require("../modules/dashboard/dashboard.routes");
-const category_routes_2 = require("../modules/category/category.routes");
+const category_routes_1 = require("../modules/category/category.routes");
 const city_routes_1 = require("../modules/city/city.routes");
 const school_routes_1 = require("../modules/school/school.routes");
 exports.router = (0, express_1.Router)();
@@ -46,7 +45,7 @@ const moduleRoutes = [
     },
     {
         path: '/courses/categories',
-        route: category_routes_2.categoriesRoutes
+        route: category_routes_1.categoriesRoutes
     },
     {
         path: '/courses',
@@ -116,10 +115,10 @@ const moduleRoutes = [
         path: "/upload",
         route: upload_route_1.UploadRoutes
     },
-    {
-        path: "/ecom/categories",
-        route: category_routes_1.CategoryRoutes
-    },
+    // {
+    //     path: "/ecom/categories",
+    //     route: CategoryRoutes
+    // },
     {
         path: "/ecom/products",
         route: product_routes_1.ProductRoutes

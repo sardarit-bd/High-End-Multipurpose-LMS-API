@@ -8,7 +8,5 @@ const zod_1 = __importDefault(require("zod"));
 exports.createCategoryZod = zod_1.default.object({
     name: zod_1.default.string().min(2),
     slug: zod_1.default.string().min(2),
-    parent: zod_1.default.string().optional(),
     isActive: zod_1.default.boolean().optional(),
-    order: zod_1.default.number().optional(),
 });
