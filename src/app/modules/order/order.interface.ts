@@ -3,11 +3,10 @@ import { Types } from "mongoose";
 export type OrderStatus = "pending" | "paid" | "failed" | "refunded" | "canceled";
 export type PaymentProvider = "stripe" | "paypal" | "toyyibpay";
 
-export type OrderSource = "course" | "package" | "event" | "ecommerce";
+export type OrderSource = "course" | "package" | "event" | "ecommerce" | "Donation";
 
 export interface IOrderEcommerceItem {
     product: string;
-    variantId?: string;
     qty: number;
     unitPrice: number;
     title: Record<string, string>;
@@ -47,6 +46,7 @@ export interface IOrder {
     itemType: OrderSource;
     courseIds?: string[];
     course?: Types.ObjectId;
+    fund?: string;
     package?: Types.ObjectId;
     billingInfo?: object,
 

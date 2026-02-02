@@ -41,6 +41,12 @@ router.post(
 
   orderController.createCheckout
 );
+router.post(
+  "/donation-checkout",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+
+  orderController.createDonationCheckout
+);
 
 router.get("/me", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), orderController.getMyOrders);
 

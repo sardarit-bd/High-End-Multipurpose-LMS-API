@@ -3,7 +3,6 @@ import { IOrder } from "./order.interface";
 import { object } from "zod";
 const orderEcommerceItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: "Product" },
-    variantId: { type: Schema.Types.ObjectId },
     qty: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
     title: { type: Schema.Types.Mixed, required: true },
@@ -32,9 +31,10 @@ const orderEcommerceSchema = new Schema({
 
 const OrderSchema = new Schema<IOrder>({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    itemType: { type: String, enum: ["course", "package", "event", "ecommerce"], required: true },
+    itemType: { type: String, enum: ["course", "package", "event", "ecommerce", "Donation"], required: true },
     package: { id: { type: String }, name: { type: Schema.Types.Mixed } },
     course: { type: String },
+    fund: {type: String},
     courseIds: [{ type: String }],
     billingInfo: {type: Object},
 

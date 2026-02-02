@@ -34,4 +34,9 @@ const getProduct = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
     const data = yield product_service_1.ProductServices.getProduct(req.params.slug);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Product detail", data });
 }));
-exports.ProductController = { createProduct, listProducts, getProduct, updateProduct };
+const getPurchasedProducts = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.user;
+    const data = yield product_service_1.ProductServices.getPurchasedProducts(user === null || user === void 0 ? void 0 : user.userId);
+    (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Product detail", data });
+}));
+exports.ProductController = { createProduct, listProducts, getProduct, updateProduct, getPurchasedProducts };

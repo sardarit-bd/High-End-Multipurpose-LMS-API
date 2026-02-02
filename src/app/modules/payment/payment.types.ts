@@ -1,5 +1,5 @@
 export type Provider = "stripe" | "paypal" | "toyyibpay";
-export type PaymentSource = "course" | "package" | "event" | "ecommerce";
+export type PaymentSource = "course" | "package" | "event" | "ecommerce" | "Donation";
 
 export type CreateSessionInput = {
   provider: Provider;

@@ -30,7 +30,7 @@ const ensureOrder = async (orderId: string) => {
 /** Admin: mark e-commerce order as shipped/processing (sets tracking optionally) */
 const fulfillEcommerceOrder = async (
   orderId: string,
-  payload: { status: "processing" | "shipped"; trackingNumber?: string; carrier?: string },
+  payload: { status?: "processing" | "shipped"; trackingNumber?: string; carrier?: string },
   actor: { userId: string; role: string }
 ) => {
   assertAdmin(actor);
@@ -47,10 +47,10 @@ const fulfillEcommerceOrder = async (
   ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || ({} as any);
 
   // Update fields
-  ord.ecommerce.fulfillment.status = payload.status;
-  if (payload.trackingNumber) ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
-  if (payload.carrier) ord.ecommerce.fulfillment.carrier = payload.carrier;
-  if (payload.status === "shipped") ord.ecommerce.fulfillment.shippedAt = new Date();
+  ord.ecommerce.fulfillment.status = payload?.status || "shipped";
+  if (payload?.trackingNumber) ord.ecommerce.fulfillment.trackingNumber = payload?.trackingNumber;
+  if (payload?.carrier) ord.ecommerce.fulfillment.carrier = payload?.carrier;
+  if (payload?.status === "shipped") ord.ecommerce.fulfillment.shippedAt = new Date();
 
   await ord.save();
   return ord;
@@ -262,6 +262,40 @@ const createCheckout = async (
   return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 };
 
+const createDonationCheckout = async (
+  fund: string,
+  userId: string,
+  provider: "stripe" | "paypal" | "toyyibpay",
+  amount: number
+) => {
+
+
+  // Handle paid courses - create payment session
+  const order = await Order.create({
+    user: userId,
+    fund: fund,
+    price: amount,
+    currency: "USD",
+    provider,
+    itemType: "Donation",
+    status: "pending",
+  });
+
+  const session = await PaymentService.createCheckoutSession({
+    provider,
+    orderId: String(order._id),
+    amount: amount * 100,
+    currency: 'USD',
+    userId: String(userId),
+    source: "event"
+  });
+
+  console.log("Created checkout session:", session);
+  order.providerSessionId = session.sessionId;
+  await order.save();
+
+  return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+};
 /* ----------------------- PACKAGE CHECKOUT ----------------------- */
 const createCheckoutForPackage = async (input: {
   packageId: string;
@@ -351,14 +385,13 @@ const startEcommerceCheckoutFromClient = async (input: any) => {
     });
   }
 
-  console.log(verifiedLines)
+
   const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
   const discount = 0;
   const shippingFee = 0;
   const tax = .1;
   const total = subtotal - discount + shippingFee + (subtotal - discount + shippingFee) * tax;
 
-  console.log(total)
   const order = await Order.create({
     user: input.userId,
     provider: input?.payload?.provider,
@@ -549,4 +582,5 @@ export const OrderServices = {
   updateEcommerceTracking,
   markEcommerceDelivered,
   cancelOrder,
+  createDonationCheckout
 };

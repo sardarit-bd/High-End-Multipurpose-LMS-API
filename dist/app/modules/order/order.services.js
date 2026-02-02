@@ -81,12 +81,12 @@ const fulfillEcommerceOrder = (orderId, payload, actor) => __awaiter(void 0, voi
     ord.ecommerce = ord.ecommerce || {};
     ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || {};
     // Update fields
-    ord.ecommerce.fulfillment.status = payload.status;
-    if (payload.trackingNumber)
-        ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
-    if (payload.carrier)
-        ord.ecommerce.fulfillment.carrier = payload.carrier;
-    if (payload.status === "shipped")
+    ord.ecommerce.fulfillment.status = (payload === null || payload === void 0 ? void 0 : payload.status) || "shipped";
+    if (payload === null || payload === void 0 ? void 0 : payload.trackingNumber)
+        ord.ecommerce.fulfillment.trackingNumber = payload === null || payload === void 0 ? void 0 : payload.trackingNumber;
+    if (payload === null || payload === void 0 ? void 0 : payload.carrier)
+        ord.ecommerce.fulfillment.carrier = payload === null || payload === void 0 ? void 0 : payload.carrier;
+    if ((payload === null || payload === void 0 ? void 0 : payload.status) === "shipped")
         ord.ecommerce.fulfillment.shippedAt = new Date();
     yield ord.save();
     return ord;
@@ -246,6 +246,30 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
     yield order.save();
     return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 });
+const createDonationCheckout = (fund, userId, provider, amount) => __awaiter(void 0, void 0, void 0, function* () {
+    // Handle paid courses - create payment session
+    const order = yield order_model_1.Order.create({
+        user: userId,
+        fund: fund,
+        price: amount,
+        currency: "USD",
+        provider,
+        itemType: "Donation",
+        status: "pending",
+    });
+    const session = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider,
+        orderId: String(order._id),
+        amount: amount * 100,
+        currency: 'USD',
+        userId: String(userId),
+        source: "event"
+    });
+    console.log("Created checkout session:", session);
+    order.providerSessionId = session.sessionId;
+    yield order.save();
+    return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+});
 /* ----------------------- PACKAGE CHECKOUT ----------------------- */
 const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, function* () {
     const order = yield order_model_1.Order.create({
@@ -300,13 +324,11 @@ const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, vo
             image: line.image || ((_c = prod.images) === null || _c === void 0 ? void 0 : _c[0]),
         });
     }
-    console.log(verifiedLines);
     const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
     const discount = 0;
     const shippingFee = 0;
     const tax = .1;
     const total = subtotal - discount + shippingFee + (subtotal - discount + shippingFee) * tax;
-    console.log(total);
     const order = yield order_model_1.Order.create({
         user: input.userId,
         provider: (_d = input === null || input === void 0 ? void 0 : input.payload) === null || _d === void 0 ? void 0 : _d.provider,
@@ -462,4 +484,5 @@ exports.OrderServices = {
     updateEcommerceTracking,
     markEcommerceDelivered,
     cancelOrder,
+    createDonationCheckout
 };
