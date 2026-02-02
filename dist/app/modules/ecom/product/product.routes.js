@@ -8,6 +8,7 @@ const user_interface_1 = require("../../user/user.interface");
 const router = (0, express_1.Router)();
 router.post("/", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), product_controller_1.ProductController.createProduct);
 router.get("/", product_controller_1.ProductController.listProducts);
+router.get('/purchased-product', (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.STUDENT), product_controller_1.ProductController.getPurchasedProducts);
 router.get("/:slug", product_controller_1.ProductController.getProduct);
 router.put("/:slug", product_controller_1.ProductController.updateProduct);
 exports.ProductRoutes = router;
