@@ -440,7 +440,8 @@ const getOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function
             provider: "$provider",
             course: 1,
             ecommerce: 1,
-            createdAt: 1
+            createdAt: 1,
+            fund: 1
         }
     }, {
         $sort: { createdAt: -1 }
