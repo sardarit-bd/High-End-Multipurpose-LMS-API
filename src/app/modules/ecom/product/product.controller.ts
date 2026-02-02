@@ -2,6 +2,7 @@ import { catchAsync } from "../../../utils/catchAsync";
 import { sendResponse } from "../../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 import { ProductServices } from "./product.service";
+import { JwtPayload } from "jsonwebtoken";
 
 const createProduct = catchAsync(async (req, res) => {
   const data = await ProductServices.createProduct(req.body);
@@ -24,4 +25,10 @@ const getProduct = catchAsync(async (req, res) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Product detail", data });
 });
 
-export const ProductController = { createProduct, listProducts, getProduct, updateProduct };
+const getPurchasedProducts = catchAsync(async (req, res) => {
+  const user = req.user as JwtPayload
+  const data = await ProductServices.getPurchasedProducts(user?.userId)
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Product detail", data });
+});
+
+export const ProductController = { createProduct, listProducts, getProduct, updateProduct, getPurchasedProducts };
