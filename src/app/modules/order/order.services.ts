@@ -30,7 +30,7 @@ const ensureOrder = async (orderId: string) => {
 /** Admin: mark e-commerce order as shipped/processing (sets tracking optionally) */
 const fulfillEcommerceOrder = async (
   orderId: string,
-  payload: { status: "processing" | "shipped"; trackingNumber?: string; carrier?: string },
+  payload: { status?: "processing" | "shipped"; trackingNumber?: string; carrier?: string },
   actor: { userId: string; role: string }
 ) => {
   assertAdmin(actor);
@@ -47,10 +47,10 @@ const fulfillEcommerceOrder = async (
   ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || ({} as any);
 
   // Update fields
-  ord.ecommerce.fulfillment.status = payload.status;
-  if (payload.trackingNumber) ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
-  if (payload.carrier) ord.ecommerce.fulfillment.carrier = payload.carrier;
-  if (payload.status === "shipped") ord.ecommerce.fulfillment.shippedAt = new Date();
+  ord.ecommerce.fulfillment.status = payload?.status || "shipped";
+  if (payload?.trackingNumber) ord.ecommerce.fulfillment.trackingNumber = payload?.trackingNumber;
+  if (payload?.carrier) ord.ecommerce.fulfillment.carrier = payload?.carrier;
+  if (payload?.status === "shipped") ord.ecommerce.fulfillment.shippedAt = new Date();
 
   await ord.save();
   return ord;
@@ -351,14 +351,13 @@ const startEcommerceCheckoutFromClient = async (input: any) => {
     });
   }
 
-  console.log(verifiedLines)
+
   const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
   const discount = 0;
   const shippingFee = 0;
   const tax = .1;
   const total = subtotal - discount + shippingFee + (subtotal - discount + shippingFee) * tax;
 
-  console.log(total)
   const order = await Order.create({
     user: input.userId,
     provider: input?.payload?.provider,

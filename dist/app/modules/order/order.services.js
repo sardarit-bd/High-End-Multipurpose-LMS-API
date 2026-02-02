@@ -81,12 +81,12 @@ const fulfillEcommerceOrder = (orderId, payload, actor) => __awaiter(void 0, voi
     ord.ecommerce = ord.ecommerce || {};
     ord.ecommerce.fulfillment = ord.ecommerce.fulfillment || {};
     // Update fields
-    ord.ecommerce.fulfillment.status = payload.status;
-    if (payload.trackingNumber)
-        ord.ecommerce.fulfillment.trackingNumber = payload.trackingNumber;
-    if (payload.carrier)
-        ord.ecommerce.fulfillment.carrier = payload.carrier;
-    if (payload.status === "shipped")
+    ord.ecommerce.fulfillment.status = (payload === null || payload === void 0 ? void 0 : payload.status) || "shipped";
+    if (payload === null || payload === void 0 ? void 0 : payload.trackingNumber)
+        ord.ecommerce.fulfillment.trackingNumber = payload === null || payload === void 0 ? void 0 : payload.trackingNumber;
+    if (payload === null || payload === void 0 ? void 0 : payload.carrier)
+        ord.ecommerce.fulfillment.carrier = payload === null || payload === void 0 ? void 0 : payload.carrier;
+    if ((payload === null || payload === void 0 ? void 0 : payload.status) === "shipped")
         ord.ecommerce.fulfillment.shippedAt = new Date();
     yield ord.save();
     return ord;
@@ -300,13 +300,11 @@ const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, vo
             image: line.image || ((_c = prod.images) === null || _c === void 0 ? void 0 : _c[0]),
         });
     }
-    console.log(verifiedLines);
     const subtotal = verifiedLines.reduce((s, it) => s + it.unitPrice * it.qty, 0);
     const discount = 0;
     const shippingFee = 0;
     const tax = .1;
     const total = subtotal - discount + shippingFee + (subtotal - discount + shippingFee) * tax;
-    console.log(total);
     const order = yield order_model_1.Order.create({
         user: input.userId,
         provider: (_d = input === null || input === void 0 ? void 0 : input.payload) === null || _d === void 0 ? void 0 : _d.provider,
