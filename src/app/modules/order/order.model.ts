@@ -50,7 +50,7 @@ const OrderSchema = new Schema<IOrder>({
     isDeleted: { type: Boolean, default: false }
 }, { timestamps: true, versionKey: false });
 
-OrderSchema.index({ user: 1, course: 1, status: 1 });
-OrderSchema.index({ provider: 1, providerPaymentId: 1 }, { unique: true, sparse: true });
+// OrderSchema.index({ user: 1, course: 1, status: 1 });
+// OrderSchema.index({ provider: 1, providerPaymentId: 1 }, { unique: true, sparse: true });
 
 export const Order = models.Order || model<IOrder>("Order", OrderSchema);

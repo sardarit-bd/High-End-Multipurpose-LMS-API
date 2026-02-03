@@ -6,7 +6,7 @@ export interface IPackage {
   courseIds: Types.ObjectId[];           
   features: string[];                   
   price: number;                   
-  offerPrice?: number;              
+  comparePrice?: number;              
   currency: string;                    
   accessDays?: number;                   
   isActive: boolean;

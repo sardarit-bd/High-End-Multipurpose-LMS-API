@@ -47,6 +47,6 @@ const OrderSchema = new mongoose_1.Schema({
     meta: { type: mongoose_1.Schema.Types.Mixed },
     isDeleted: { type: Boolean, default: false }
 }, { timestamps: true, versionKey: false });
-OrderSchema.index({ user: 1, course: 1, status: 1 });
-OrderSchema.index({ provider: 1, providerPaymentId: 1 }, { unique: true, sparse: true });
+// OrderSchema.index({ user: 1, course: 1, status: 1 });
+// OrderSchema.index({ provider: 1, providerPaymentId: 1 }, { unique: true, sparse: true });
 exports.Order = mongoose_1.models.Order || (0, mongoose_1.model)("Order", OrderSchema);
