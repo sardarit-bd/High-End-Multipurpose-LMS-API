@@ -48,13 +48,25 @@ const packageGet = (packageId) => __awaiter(void 0, void 0, void 0, function* ()
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Package not found");
     return pkg;
 });
-const packageListPublic = () => __awaiter(void 0, void 0, void 0, function* () { return package_model_1.Package.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 }); });
+const packageListPublic = () => __awaiter(void 0, void 0, void 0, function* () {
+    return yield package_model_1.Package.find({
+        isDeleted: { $ne: true },
+    })
+        .populate({
+        path: 'courseIds',
+        select: 'title price category thumbnail level noOfStudents',
+        match: {
+            isDeleted: { $ne: true },
+        }
+    })
+        .sort({ createdAt: -1 });
+});
 /** Reuse order system to create a checkout for a package */
 const createCheckout = (packageId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const pkg = yield package_model_1.Package.findOne({ _id: packageId, isDeleted: { $ne: true }, isActive: true });
     if (!pkg)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Package not found");
-    const amount = typeof pkg.offerPrice === "number" ? pkg.offerPrice : pkg.price;
+    const amount = pkg.price;
     // Reuse OrderServices but for itemType "package"
     return order_services_1.OrderServices.createCheckoutForPackage({
         packageId: String(pkg._id),

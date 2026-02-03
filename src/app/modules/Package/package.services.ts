@@ -34,15 +34,26 @@ const packageGet = async (packageId: string) => {
   return pkg;
 };
 
-const packageListPublic = async () =>
-  Package.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
+const packageListPublic = async () => {
+  return await Package.find({ 
+    isDeleted: { $ne: true },
+  })
+  .populate({
+    path: 'courseIds',
+    select: 'title price category thumbnail level noOfStudents',
+    match: { 
+      isDeleted: { $ne: true },
+    }
+  })
+  .sort({ createdAt: -1 });
+};
 
 /** Reuse order system to create a checkout for a package */
 const createCheckout = async (packageId: string, userId: string) => {
   const pkg = await Package.findOne({ _id: packageId, isDeleted: { $ne: true }, isActive: true });
   if (!pkg) throw new AppError(httpStatus.NOT_FOUND, "Package not found");
 
-  const amount = typeof pkg.offerPrice === "number" ? pkg.offerPrice : pkg.price;
+  const amount = pkg.price;
 
   // Reuse OrderServices but for itemType "package"
   return OrderServices.createCheckoutForPackage({

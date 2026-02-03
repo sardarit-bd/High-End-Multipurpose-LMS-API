@@ -134,6 +134,7 @@ const markPaidFromWebhook = async (
   } else if (order.itemType === "package" && order.courseIds?.length) {
     // Multiple course package purchase
     for (const courseId of order.courseIds) {
+      course = await Course.findById(normalized.courseId)
       await EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
       await Course.findByIdAndUpdate(
         courseId,

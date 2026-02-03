@@ -120,6 +120,7 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     else if (order.itemType === "package" && ((_d = order.courseIds) === null || _d === void 0 ? void 0 : _d.length)) {
         // Multiple course package purchase
         for (const courseId of order.courseIds) {
+            course = yield course_model_1.Course.findById(normalized.courseId);
             yield enrollment_services_1.EnrollmentServices.enrollSelf(String(courseId), normalized.userId, course.instructor);
             yield course_model_1.Course.findByIdAndUpdate(courseId, {
                 $inc: { noOfStudents: 1 },

@@ -255,7 +255,6 @@ const createCheckout = async (
     source: itemType,
   });
 
-  console.log("Created checkout session:", session);
   order.providerSessionId = session.sessionId;
   await order.save();
 
@@ -284,13 +283,12 @@ const createDonationCheckout = async (
   const session = await PaymentService.createCheckoutSession({
     provider,
     orderId: String(order._id),
-    amount: amount * 100,
+    amount: amount,
     currency: 'USD',
     userId: String(userId),
     source: "event"
   });
 
-  console.log("Created checkout session:", session);
   order.providerSessionId = session.sessionId;
   await order.save();
 
@@ -319,16 +317,14 @@ const createCheckoutForPackage = async (input: {
   const session = await PaymentService.createCheckoutSession({
     provider: "stripe",
     orderId: String(order._id),
-    amount: input.amount,
+    amount: input.amount * 100,
     currency: input.currency,
     packageId: input.packageId,
     userId: input.userId,
     source: "package",
   });
-
   order.providerSessionId = session.sessionId;
   await order.save();
-
   return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
 };
 
@@ -349,9 +345,7 @@ type ClientEcomInput = {
 };
 
 const startEcommerceCheckoutFromClient = async (input: any) => {
-  console.log(input)
   const items = input?.payload?.items ?? [];
-  console.log(items)
 
   if (!items.length)
     throw new AppError(httpStatus.BAD_REQUEST, "No items found to checkout");

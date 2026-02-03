@@ -241,7 +241,6 @@ const createCheckout = (courseId, userId, provider, itemType, couponCode, billin
         userId: String(userId),
         source: itemType,
     });
-    console.log("Created checkout session:", session);
     order.providerSessionId = session.sessionId;
     yield order.save();
     return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
@@ -260,12 +259,11 @@ const createDonationCheckout = (fund, userId, provider, amount) => __awaiter(voi
     const session = yield payment_services_1.PaymentService.createCheckoutSession({
         provider,
         orderId: String(order._id),
-        amount: amount * 100,
+        amount: amount,
         currency: 'USD',
         userId: String(userId),
         source: "event"
     });
-    console.log("Created checkout session:", session);
     order.providerSessionId = session.sessionId;
     yield order.save();
     return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
@@ -285,7 +283,7 @@ const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, fu
     const session = yield payment_services_1.PaymentService.createCheckoutSession({
         provider: "stripe",
         orderId: String(order._id),
-        amount: input.amount,
+        amount: input.amount * 100,
         currency: input.currency,
         packageId: input.packageId,
         userId: input.userId,
@@ -297,9 +295,7 @@ const createCheckoutForPackage = (input) => __awaiter(void 0, void 0, void 0, fu
 });
 const startEcommerceCheckoutFromClient = (input) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;
-    console.log(input);
     const items = (_b = (_a = input === null || input === void 0 ? void 0 : input.payload) === null || _a === void 0 ? void 0 : _a.items) !== null && _b !== void 0 ? _b : [];
-    console.log(items);
     if (!items.length)
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "No items found to checkout");
     const verifiedLines = [];
