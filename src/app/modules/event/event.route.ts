@@ -15,6 +15,11 @@ router.post(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   eventController.create
 );
+router.post(
+  "/checkout",
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  eventController.createCheckout
+);
 router.patch(
   "/:eventId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
@@ -25,6 +30,7 @@ router.delete(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   eventController.remove
 );
+
 
 // Student participation
 router.post(

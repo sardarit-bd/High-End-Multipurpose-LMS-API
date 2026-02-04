@@ -48,6 +48,7 @@ export interface IOrder {
     course?: Types.ObjectId;
     fund?: string;
     package?: Types.ObjectId;
+    event?: Types.ObjectId;
     billingInfo?: object,
 
 

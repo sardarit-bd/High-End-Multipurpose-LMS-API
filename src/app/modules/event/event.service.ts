@@ -2,23 +2,23 @@
 import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { Event } from "./event.model";
-import { IEvent, EventStatus } from "./event.interface";
+import { IEvent } from "./event.interface";
 import { GamificationServices } from "../gamification/gamification.service"; // optional if already exists
 import { BadgeServices } from "../badge/badge.service";
+import { OrderServices } from "../order/order.services";
 
 const create = async (payload: Partial<IEvent>, userId: string) => {
-  const now = new Date(payload.startDate ?? Date.now());
-  const status = now > new Date() ? EventStatus.UPCOMING : EventStatus.ONGOING;
-
+  const now = new Date(payload.eventDate ?? Date.now());
+  console.log(payload)
   const event = await Event.create({
     ...payload,
-    organizer: userId,
-    status,
+    organizer: userId
   });
   return event;
 };
 
 const update = async (eventId: string, payload: Partial<IEvent>) => {
+  console.log(eventId, payload)
   const event = await Event.findByIdAndUpdate(eventId, payload, { new: true });
   if (!event) throw new AppError(httpStatus.NOT_FOUND, "Event not found");
   return event;
@@ -78,6 +78,21 @@ const markAttendance = async (eventId: string, userId: string) => {
   return { message: "Attendance confirmed and points added", event };
 };
 
+const createCheckout = async (eventId: string, userId: string) => {
+  const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true }});
+  if (!event) throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+
+  const amount = event.price;
+
+  // Reuse OrderServices but for itemType "event"
+  return OrderServices.createCheckoutForEvent({
+    eventId: String(event._id),
+    userId,
+    amount,
+    currency: event.currency || "USD",
+    name: event.title?.en || "Event"
+  });
+};
 export const EventServices = {
   create,
   update,
@@ -86,4 +101,5 @@ export const EventServices = {
   get,
   register,
   markAttendance,
+  createCheckout
 };

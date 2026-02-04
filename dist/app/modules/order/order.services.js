@@ -468,6 +468,29 @@ const getOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function
         totalPages: Math.ceil(total / limit)
     };
 });
+const createCheckoutForEvent = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    const order = yield order_model_1.Order.create({
+        user: input.userId,
+        event: input.eventId,
+        price: input.amount,
+        currency: input.currency,
+        provider: "stripe",
+        status: "pending",
+        itemType: "event",
+    });
+    const session = yield payment_services_1.PaymentService.createCheckoutSession({
+        provider: "stripe",
+        orderId: String(order._id),
+        amount: input.amount * 100,
+        currency: input.currency,
+        eventId: input.eventId,
+        userId: input.userId,
+        source: "event",
+    });
+    order.providerSessionId = session.sessionId;
+    yield order.save();
+    return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+});
 /* ----------------------- EXPORT ----------------------- */
 exports.OrderServices = {
     createCheckout,
@@ -481,5 +504,6 @@ exports.OrderServices = {
     updateEcommerceTracking,
     markEcommerceDelivered,
     cancelOrder,
-    createDonationCheckout
+    createDonationCheckout,
+    createCheckoutForEvent
 };

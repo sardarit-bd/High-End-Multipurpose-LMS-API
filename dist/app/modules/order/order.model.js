@@ -36,6 +36,7 @@ const OrderSchema = new mongoose_1.Schema({
     fund: { type: String },
     courseIds: [{ type: String }],
     billingInfo: { type: Object },
+    event: { type: mongoose_1.Schema.Types.ObjectId, ref: "Event" },
     ecommerce: { type: orderEcommerceSchema },
     price: { type: Number, required: true },
     currency: { type: String, required: true },
