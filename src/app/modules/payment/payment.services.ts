@@ -19,6 +19,7 @@ const providers = {
 } as const;
 
 const createCheckoutSession = async (input: CreateSessionInput) => {
+  console.log("Creating checkout session with input:", input);
   const p = providers[input.provider];
   if (!p) throw new AppError(httpStatus.BAD_REQUEST, "Unsupported provider");
   return p.createCheckoutSession(input);
@@ -38,9 +39,7 @@ const markPaidFromWebhook = async (
     eventId?: string;
   }
 ) => {
-  console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
 
-  // Validate order existence
   const order = await Order.findById(normalized.orderId);
   let course, event;
   if (normalized.courseId) {
@@ -49,6 +48,7 @@ const markPaidFromWebhook = async (
   if (normalized.eventId) {
     event = await Event.findById(normalized.eventId)
   }
+
   if (!order) {
     console.error(`❌ Order not found: ${normalized.orderId}`);
     throw new AppError(httpStatus.NOT_FOUND, `Order not found: ${normalized.orderId}`);
@@ -73,7 +73,6 @@ const markPaidFromWebhook = async (
     throw new AppError(httpStatus.BAD_REQUEST, "Payment amount does not match order amount");
   }
 
-  console.log(`✅ Amount validation passed - Expected: ${expectedAmount}, Received: ${normalized.amount}`);
 
   // Mark order as paid (idempotent update)
   order.providerPaymentId = normalized.providerPaymentId;
@@ -85,7 +84,6 @@ const markPaidFromWebhook = async (
    * 🛍️ HANDLE ECOMMERCE ORDER
    * ------------------------------------------------------------------ */
   if (order.itemType === "ecommerce" && order.ecommerce?.items?.length) {
-    // 3a. Decrement product stock
     for (const item of order.ecommerce.items) {
       const prod: any = await Product.findById(item.product);
       if (!prod) continue;
@@ -94,10 +92,6 @@ const markPaidFromWebhook = async (
       await prod.save();
     }
 
-    // 3b. (Optional) clear frontend cart if stored server-side
-    // await CartServices.clear(String(order.user));
-
-    // 3c. Award purchase points (basic gamification)
     const points = Math.floor((order.amount || 0) / 10); // $10 => 1 point
     if (points > 0) {
       await GamificationServices.addPoints({
@@ -117,8 +111,7 @@ const markPaidFromWebhook = async (
    * 🎓 HANDLE COURSE / PACKAGE ENROLLMENT
    * ------------------------------------------------------------------ */
   if (order.itemType === "course" && order.course) {
-    // Single course purchase
-    console.log(course, course?.instructor)
+  
     await EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
 
     // Optional: auto-award enrollment points
@@ -158,9 +151,11 @@ const markPaidFromWebhook = async (
     });
   }
 
-  if (order.itemType === "event" && order.course) {
+  if (order.itemType === "event") {
+    console.log("Enrolling for event:", event)
 
     event.attendees = event.attendees || [];
+
     if (!event.attendees.includes(normalized.userId as any)) {
       event.attendees.push(normalized.userId as any);
       await event.save();
@@ -170,16 +165,8 @@ const markPaidFromWebhook = async (
       userId: normalized.userId,
       points: 20,
       sourceType: order.itemType,
-      courseId: String(order.course),
-      reason: "Course enrollment",
+      reason: "Registered for event",
     });
-    await Course.findByIdAndUpdate(
-      normalized.courseId,
-      {
-        $inc: { noOfStudents: 1 },
-      },
-      { new: true }
-    );
   }
 
   /* --------------------------------------------------------------------

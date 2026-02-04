@@ -27,7 +27,7 @@ const stripe = new stripe_1.default(env_1.envVars.PAYMENT.STRIPE_SECRET_KEY, {
     apiVersion: "2025-10-29.clover",
 });
 exports.stripeWebhook = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     console.log("🔄 Received Stripe webhook");
     console.log("Headers:", Object.keys(req.headers));
     console.log("Has stripe-signature:", !!req.headers["stripe-signature"]);
@@ -66,6 +66,7 @@ exports.stripeWebhook = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(voi
         console.log("📋 Processing Stripe checkout.session.completed");
         console.log("Session ID:", session.id);
         console.log("Metadata:", session.metadata);
+        console.log("Raw session data:", session);
         const normalized = {
             providerPaymentId: ((_a = session.payment_intent) !== null && _a !== void 0 ? _a : ""),
             providerSessionId: session.id,
@@ -74,6 +75,7 @@ exports.stripeWebhook = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(voi
             orderId: (((_b = session.metadata) === null || _b === void 0 ? void 0 : _b.orderId) || "").trim(),
             userId: (((_c = session.metadata) === null || _c === void 0 ? void 0 : _c.userId) || "").trim(),
             courseId: (((_d = session.metadata) === null || _d === void 0 ? void 0 : _d.courseId) || ((_e = session.metadata) === null || _e === void 0 ? void 0 : _e.packageId) || "").trim(),
+            eventId: (((_f = session.metadata) === null || _f === void 0 ? void 0 : _f.eventId) || "").trim(),
         };
         // Validate required fields
         if (!normalized.orderId || !normalized.userId) {

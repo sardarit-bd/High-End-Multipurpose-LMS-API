@@ -395,14 +395,28 @@ const getOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function
                 localField: "user",
                 foreignField: "_id",
                 as: "userData"
-            }
+            },
         },
         {
             $unwind: {
                 path: "$userData",
                 preserveNullAndEmptyArrays: true
             }
-        }
+        },
+        {
+            $lookup: {
+                from: "events",
+                localField: "event",
+                foreignField: "_id",
+                as: "eventData"
+            }
+        },
+        {
+            $unwind: {
+                path: "$eventData",
+                preserveNullAndEmptyArrays: true
+            }
+        },
     ];
     // Add search filter if query exists
     if (q) {
@@ -437,7 +451,8 @@ const getOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function
             course: 1,
             ecommerce: 1,
             createdAt: 1,
-            fund: 1
+            fund: 1,
+            event: "$eventData.title"
         }
     }, {
         $sort: { createdAt: -1 }

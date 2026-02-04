@@ -35,6 +35,8 @@ export class StripeProvider implements IPaymentProvider {
         orderId: input.orderId || "",
         userId: input.userId || "",
         courseId: input.courseId || "",
+        packageId: input.packageId || "",
+        eventId: input.eventId || "",
       },
     };
 

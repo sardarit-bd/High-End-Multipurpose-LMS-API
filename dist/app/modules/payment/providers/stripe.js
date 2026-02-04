@@ -46,6 +46,8 @@ class StripeProvider {
                     orderId: input.orderId || "",
                     userId: input.userId || "",
                     courseId: input.courseId || "",
+                    packageId: input.packageId || "",
+                    eventId: input.eventId || "",
                 },
             };
             const session = yield this.stripe.checkout.sessions.create(params);
