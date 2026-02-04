@@ -6,6 +6,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { EventServices } from "./event.service";
 import { IEvent } from "./event.interface";
+import { PackageServices } from "../Package/package.services";
 
 const create = catchAsync(async (req: Request, res: Response) => {
   const actor = req.user as JwtPayload;
@@ -80,6 +81,13 @@ const markAttendance = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createCheckout = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  console.log("Creating checkout for event:", req.body.eventId, "by user:", token.userId);
+  const data = await EventServices.createCheckout(req.body.eventId, token.userId);
+  sendResponse(res, { statusCode: httpStatus.CREATED, success: true, message: "Checkout created", data });
+});
+
 export const eventController = {
   create,
   update,
@@ -88,4 +96,5 @@ export const eventController = {
   get,
   register,
   markAttendance,
+  createCheckout
 };

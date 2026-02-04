@@ -11,6 +11,7 @@ router.get("/", event_controller_1.eventController.listPublic);
 router.get("/:eventId", event_controller_1.eventController.get);
 // Admin / Partner
 router.post("/create", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), event_controller_1.eventController.create);
+router.post("/checkout", (0, checkAuth_1.checkAuth)(user_interface_1.Role.STUDENT, user_interface_1.Role.INSTRUCTOR, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), event_controller_1.eventController.createCheckout);
 router.patch("/:eventId", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), event_controller_1.eventController.update);
 router.delete("/:eventId", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), event_controller_1.eventController.remove);
 // Student participation

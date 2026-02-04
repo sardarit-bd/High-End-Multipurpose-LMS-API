@@ -10,6 +10,7 @@ import AppError from "../../errorHelpers/AppError";
 import { GamificationServices } from "../gamification/gamification.service";
 import { Product } from "../ecom/product/product.model";
 import { Course } from "../course/course.model";
+import { Event } from "../event/event.model";
 
 const providers = {
   stripe: new StripeProvider(),
@@ -34,15 +35,19 @@ const markPaidFromWebhook = async (
     orderId: string;
     userId: string;
     courseId?: string;
+    eventId?: string;
   }
 ) => {
   console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
 
   // Validate order existence
   const order = await Order.findById(normalized.orderId);
-  let course
+  let course, event;
   if (normalized.courseId) {
     course = await Course.findById(normalized.courseId)
+  }
+  if (normalized.eventId) {
+    event = await Event.findById(normalized.eventId)
   }
   if (!order) {
     console.error(`❌ Order not found: ${normalized.orderId}`);
@@ -151,6 +156,30 @@ const markPaidFromWebhook = async (
       sourceType: order.itemType,
       reason: "Package purchase and enrollment",
     });
+  }
+
+  if (order.itemType === "event" && order.course) {
+
+    event.attendees = event.attendees || [];
+    if (!event.attendees.includes(normalized.userId as any)) {
+      event.attendees.push(normalized.userId as any);
+      await event.save();
+    }
+    // Optional: auto-award enrollment points
+    await GamificationServices.addPoints({
+      userId: normalized.userId,
+      points: 20,
+      sourceType: order.itemType,
+      courseId: String(order.course),
+      reason: "Course enrollment",
+    });
+    await Course.findByIdAndUpdate(
+      normalized.courseId,
+      {
+        $inc: { noOfStudents: 1 },
+      },
+      { new: true }
+    );
   }
 
   /* --------------------------------------------------------------------

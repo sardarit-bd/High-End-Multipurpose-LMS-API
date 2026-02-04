@@ -563,6 +563,37 @@ const getOrders = async (query: any = {}) => {
   };
 };
 
+const createCheckoutForEvent = async (input: {
+  eventId: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  name: Record<string, string>;
+}) => {
+  const order = await Order.create({
+    user: input.userId,
+    event: input.eventId,
+    price: input.amount,
+    currency: input.currency,
+    provider: "stripe",
+    status: "pending",
+    itemType: "event",
+  });
+
+  const session = await PaymentService.createCheckoutSession({
+    provider: "stripe",
+    orderId: String(order._id),
+    amount: input.amount * 100,
+    currency: input.currency,
+    eventId: input.eventId,
+    userId: input.userId,
+    source: "event",
+  });
+  order.providerSessionId = session.sessionId;
+  await order.save();
+  return { orderId: String(order._id), checkoutUrl: session.checkoutUrl };
+};
+
 /* ----------------------- EXPORT ----------------------- */
 export const OrderServices = {
   createCheckout,
@@ -577,5 +608,6 @@ export const OrderServices = {
   updateEcommerceTracking,
   markEcommerceDelivered,
   cancelOrder,
-  createDonationCheckout
+  createDonationCheckout,
+  createCheckoutForEvent
 };

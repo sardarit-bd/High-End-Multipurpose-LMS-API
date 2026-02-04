@@ -17,17 +17,18 @@ exports.EventServices = void 0;
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const event_model_1 = require("./event.model");
-const event_interface_1 = require("./event.interface");
 const gamification_service_1 = require("../gamification/gamification.service"); // optional if already exists
 const badge_service_1 = require("../badge/badge.service");
+const order_services_1 = require("../order/order.services");
 const create = (payload, userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const now = new Date((_a = payload.startDate) !== null && _a !== void 0 ? _a : Date.now());
-    const status = now > new Date() ? event_interface_1.EventStatus.UPCOMING : event_interface_1.EventStatus.ONGOING;
-    const event = yield event_model_1.Event.create(Object.assign(Object.assign({}, payload), { organizer: userId, status }));
+    const now = new Date((_a = payload.eventDate) !== null && _a !== void 0 ? _a : Date.now());
+    console.log(payload);
+    const event = yield event_model_1.Event.create(Object.assign(Object.assign({}, payload), { organizer: userId }));
     return event;
 });
 const update = (eventId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(eventId, payload);
     const event = yield event_model_1.Event.findByIdAndUpdate(eventId, payload, { new: true });
     if (!event)
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Event not found");
@@ -79,6 +80,21 @@ const markAttendance = (eventId, userId) => __awaiter(void 0, void 0, void 0, fu
     yield badge_service_1.BadgeServices.autoIssueBadge({ userId, totalPoints: 0, eventId: String(event._id) });
     return { message: "Attendance confirmed and points added", event };
 });
+const createCheckout = (eventId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const event = yield event_model_1.Event.findOne({ _id: eventId, isDeleted: { $ne: true } });
+    if (!event)
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Event not found");
+    const amount = event.price;
+    // Reuse OrderServices but for itemType "event"
+    return order_services_1.OrderServices.createCheckoutForEvent({
+        eventId: String(event._id),
+        userId,
+        amount,
+        currency: event.currency || "USD",
+        name: ((_a = event.title) === null || _a === void 0 ? void 0 : _a.en) || "Event"
+    });
+});
 exports.EventServices = {
     create,
     update,
@@ -87,4 +103,5 @@ exports.EventServices = {
     get,
     register,
     markAttendance,
+    createCheckout
 };

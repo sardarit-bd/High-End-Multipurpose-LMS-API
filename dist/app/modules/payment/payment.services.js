@@ -23,6 +23,7 @@ const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const gamification_service_1 = require("../gamification/gamification.service");
 const product_model_1 = require("../ecom/product/product.model");
 const course_model_1 = require("../course/course.model");
+const event_model_1 = require("../event/event.model");
 const providers = {
     stripe: new stripe_1.StripeProvider(),
     paypal: new paypal_1.PaypalProvider(),
@@ -40,9 +41,12 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
     console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
     // Validate order existence
     const order = yield order_model_1.Order.findById(normalized.orderId);
-    let course;
+    let course, event;
     if (normalized.courseId) {
         course = yield course_model_1.Course.findById(normalized.courseId);
+    }
+    if (normalized.eventId) {
+        event = yield event_model_1.Event.findById(normalized.eventId);
     }
     if (!order) {
         console.error(`❌ Order not found: ${normalized.orderId}`);
@@ -132,6 +136,24 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
             sourceType: order.itemType,
             reason: "Package purchase and enrollment",
         });
+    }
+    if (order.itemType === "event" && order.course) {
+        event.attendees = event.attendees || [];
+        if (!event.attendees.includes(normalized.userId)) {
+            event.attendees.push(normalized.userId);
+            yield event.save();
+        }
+        // Optional: auto-award enrollment points
+        yield gamification_service_1.GamificationServices.addPoints({
+            userId: normalized.userId,
+            points: 20,
+            sourceType: order.itemType,
+            courseId: String(order.course),
+            reason: "Course enrollment",
+        });
+        yield course_model_1.Course.findByIdAndUpdate(normalized.courseId, {
+            $inc: { noOfStudents: 1 },
+        }, { new: true });
     }
     /* --------------------------------------------------------------------
      * 📜 Audit Log (optional)

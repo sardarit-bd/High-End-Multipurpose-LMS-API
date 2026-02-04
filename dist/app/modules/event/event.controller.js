@@ -83,6 +83,12 @@ const markAttendance = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
         data,
     });
 }));
+const createCheckout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.user;
+    console.log("Creating checkout for event:", req.body.eventId, "by user:", token.userId);
+    const data = yield event_service_1.EventServices.createCheckout(req.body.eventId, token.userId);
+    (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.CREATED, success: true, message: "Checkout created", data });
+}));
 exports.eventController = {
     create,
     update,
@@ -91,4 +97,5 @@ exports.eventController = {
     get,
     register,
     markAttendance,
+    createCheckout
 };

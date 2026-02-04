@@ -1,23 +1,17 @@
 import { Types } from "mongoose";
 
-export enum EventStatus {
-  UPCOMING = "upcoming",
-  ONGOING = "ongoing",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled"
-}
 
 export interface IEvent {
   _id?: Types.ObjectId;
   title: string;
+ thumbnail?: string;
   description?: string;
-  startDate: Date;
-  endDate: Date;
+  eventDate: Date;
   location?: string;
-  organizer?: Types.ObjectId; // Admin or Organization
-  status: EventStatus;
   pointsReward: number;
-  badgeId?: Types.ObjectId;
+  organizer?: Types.ObjectId;
+  price: number;
+  duration: number;
   attendees?: Types.ObjectId[];
   isDeleted?: boolean;
   createdAt?: Date;

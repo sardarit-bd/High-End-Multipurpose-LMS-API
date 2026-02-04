@@ -37,7 +37,7 @@ const OrderSchema = new Schema<IOrder>({
     fund: {type: String},
     courseIds: [{ type: String }],
     billingInfo: {type: Object},
-
+    event: { type: Schema.Types.ObjectId, ref: "Event" },
     ecommerce: { type: orderEcommerceSchema },
     price: { type: Number, required: true },
     currency: { type: String, required: true },
