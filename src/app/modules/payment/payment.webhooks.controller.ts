@@ -66,6 +66,7 @@ export const stripeWebhook = catchAsync(async (req: Request, res: Response) => {
     console.log("Session ID:", session.id);
     console.log("Metadata:", session.metadata);
 
+    console.log("Raw session data:", session);
     const normalized = {
       providerPaymentId: (session.payment_intent ?? "") as string,
       providerSessionId: session.id,
@@ -74,6 +75,7 @@ export const stripeWebhook = catchAsync(async (req: Request, res: Response) => {
       orderId: (session.metadata?.orderId || "").trim(),
       userId: (session.metadata?.userId || "").trim(),
       courseId: (session.metadata?.courseId || session.metadata?.packageId || "").trim(),
+      eventId: (session.metadata?.eventId || "").trim(),
     };
 
     // Validate required fields

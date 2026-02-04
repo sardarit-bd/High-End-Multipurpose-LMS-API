@@ -30,6 +30,7 @@ const providers = {
     toyyibpay: new toyyibpay_1.ToyyibPayProvider()
 };
 const createCheckoutSession = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Creating checkout session with input:", input);
     const p = providers[input.provider];
     if (!p)
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Unsupported provider");
@@ -38,8 +39,6 @@ const createCheckoutSession = (input) => __awaiter(void 0, void 0, void 0, funct
 // Webhook handlers (normalized)
 const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    console.log(`💰 Processing ${provider} webhook payment for order: ${normalized.orderId}`);
-    // Validate order existence
     const order = yield order_model_1.Order.findById(normalized.orderId);
     let course, event;
     if (normalized.courseId) {
@@ -68,7 +67,6 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
         console.error(`❌ Amount mismatch - Expected: ${expectedAmount}, Received: ${normalized.amount}`);
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Payment amount does not match order amount");
     }
-    console.log(`✅ Amount validation passed - Expected: ${expectedAmount}, Received: ${normalized.amount}`);
     // Mark order as paid (idempotent update)
     order.providerPaymentId = normalized.providerPaymentId;
     order.providerSessionId = (_a = normalized.providerSessionId) !== null && _a !== void 0 ? _a : order.providerSessionId;
@@ -78,7 +76,6 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
      * 🛍️ HANDLE ECOMMERCE ORDER
      * ------------------------------------------------------------------ */
     if (order.itemType === "ecommerce" && ((_c = (_b = order.ecommerce) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.length)) {
-        // 3a. Decrement product stock
         for (const item of order.ecommerce.items) {
             const prod = yield product_model_1.Product.findById(item.product);
             if (!prod)
@@ -86,9 +83,6 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
             prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
             yield prod.save();
         }
-        // 3b. (Optional) clear frontend cart if stored server-side
-        // await CartServices.clear(String(order.user));
-        // 3c. Award purchase points (basic gamification)
         const points = Math.floor((order.amount || 0) / 10); // $10 => 1 point
         if (points > 0) {
             yield gamification_service_1.GamificationServices.addPoints({
@@ -106,8 +100,6 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
      * 🎓 HANDLE COURSE / PACKAGE ENROLLMENT
      * ------------------------------------------------------------------ */
     if (order.itemType === "course" && order.course) {
-        // Single course purchase
-        console.log(course, course === null || course === void 0 ? void 0 : course.instructor);
         yield enrollment_services_1.EnrollmentServices.enrollSelf(String(order.course), normalized.userId, course.instructor);
         // Optional: auto-award enrollment points
         yield gamification_service_1.GamificationServices.addPoints({
@@ -137,7 +129,8 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
             reason: "Package purchase and enrollment",
         });
     }
-    if (order.itemType === "event" && order.course) {
+    if (order.itemType === "event") {
+        console.log("Enrolling for event:", event);
         event.attendees = event.attendees || [];
         if (!event.attendees.includes(normalized.userId)) {
             event.attendees.push(normalized.userId);
@@ -148,12 +141,8 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
             userId: normalized.userId,
             points: 20,
             sourceType: order.itemType,
-            courseId: String(order.course),
-            reason: "Course enrollment",
+            reason: "Registered for event",
         });
-        yield course_model_1.Course.findByIdAndUpdate(normalized.courseId, {
-            $inc: { noOfStudents: 1 },
-        }, { new: true });
     }
     /* --------------------------------------------------------------------
      * 📜 Audit Log (optional)
