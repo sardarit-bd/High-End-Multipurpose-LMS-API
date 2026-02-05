@@ -26,6 +26,7 @@ app.get("/webhooks/stripe", (req: Request, res: Response) => {
   });
 });
 
+
 // Now apply all other middleware AFTER webhook routes
 app.use(
   expressSession({
