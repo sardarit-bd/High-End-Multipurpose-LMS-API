@@ -50,6 +50,17 @@ const register = async (eventId: string, userId: string) => {
   event.attendees?.push(userId as any);
   await event.save();
 
+  if (event.pointsReward > 0) {
+    await GamificationServices.addPoints({
+      userId,
+      points: event.pointsReward,
+      sourceType: "event",
+      eventId: String(event._id),
+      reason: `Attended event: ${(event.title as any).en || "Event"}`
+    });
+
+  }
+
   return event;
 };
 

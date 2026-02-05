@@ -139,8 +139,9 @@ const markPaidFromWebhook = (provider, normalized) => __awaiter(void 0, void 0, 
         // Optional: auto-award enrollment points
         yield gamification_service_1.GamificationServices.addPoints({
             userId: normalized.userId,
-            points: 20,
+            points: event.pointsReward || 0,
             sourceType: order.itemType,
+            eventId: String(event._id),
             reason: "Registered for event",
         });
     }

@@ -7,6 +7,8 @@ import { Unit } from "../unit/unit.model";
 import { Course } from "../course/course.model";
 import { Quiz } from "../quiz/quiz.model";
 import { GamificationServices } from "../gamification/gamification.service";
+import { Enrollment } from "../enrollment/enrollment.model";
+import { EnrollmentServices } from "../enrollment/enrollment.services";
 
 type GradeScoreItem = { qIndex: number; reviewPoints: number };
 type GradeBody = {
@@ -37,6 +39,15 @@ const createReviewedSubmission = async (
     type: "task",
     instructor: (await Course.findById(task.course))?.instructor,
   });
+
+  const progressData = await EnrollmentServices.calculateComprehensiveProgress(task.course, String(userId));
+  console.log(progressData)
+  const enrollment = await Enrollment.findOne({ course: task.course, user: userId });
+  if (enrollment) {
+    enrollment.progress = progressData.progress;
+    enrollment.lastActivityAt = new Date();
+    await enrollment.save();
+  }
 
   return sub;
 };
@@ -162,11 +173,11 @@ const gradeSubmission = async (
   return sub;
 };
 
- 
+
 const myCourseTotal = async (courseId: string, userId: string) => {
-    const course = await TaskSubmission.findOne({ course: courseId, user: userId });
+  const course = await TaskSubmission.findOne({ course: courseId, user: userId });
   const agg = await TaskSubmission.aggregate([
-    { $match: { course: courseId}},
+    { $match: { course: courseId } },
     // { $group: { _id: null, pointsAwarded: { $sum: "$pointsAwarded" } } },
   ]);
   console.log("Aggregation result:", agg);
@@ -218,9 +229,9 @@ const getSubmissionsForReview = async (taskId: string, instructorId: string) => 
     task: taskId,
     status: { $in: ["pending_review", "reviewed"] }
   })
-  .populate('user', 'name email avatar')
-  .populate('reviewedBy', 'name')
-  .sort({ createdAt: -1 });
+    .populate('user', 'name email avatar')
+    .populate('reviewedBy', 'name')
+    .sort({ createdAt: -1 });
 };
 
 const reviewSubmission = async (
@@ -270,7 +281,7 @@ const reviewSubmission = async (
 
     // Update breakdown with instructor scores
     const b = sub.breakdown || [];
-    
+
     for (const score of body.scores) {
       const item = b.find((x: any) => x.qIndex === score.qIndex && x.type === "short");
       if (!item) continue; // Skip if not found

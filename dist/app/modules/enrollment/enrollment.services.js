@@ -148,22 +148,23 @@ const updateProgress = (courseId, enrollmentId, actor, progress) => __awaiter(vo
 const calculateComprehensiveProgress = (courseId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const course = yield ensureCourse(courseId);
+    const units = yield Promise.resolve().then(() => __importStar(require("../unit/unit.model"))).then(mod => mod.Unit.find({ course: courseId, isDeleted: false }));
     // Get total lessons count
     const { Lesson } = yield Promise.resolve().then(() => __importStar(require("../lesson/lesson.model")));
     const totalLessons = yield Lesson.countDocuments({
-        unit: { $in: course.units },
+        unit: { $in: units.map(u => u._id) },
         isDeleted: false
     });
     // Get total tasks count (excluding quizzes since they're handled separately)
     const { Task } = yield Promise.resolve().then(() => __importStar(require("../task/task.model")));
     const totalTasks = yield Task.countDocuments({
-        unit: { $in: course.units },
+        unit: { $in: units.map(u => u._id) },
         type: { $nin: ["quiz"] },
         isDeleted: false
     });
     // Get total quizzes count
     const totalQuizzes = yield Task.countDocuments({
-        unit: { $in: course.units },
+        unit: { $in: units.map(u => u._id) },
         type: "quiz",
         isDeleted: false
     });
@@ -173,6 +174,7 @@ const calculateComprehensiveProgress = (courseId, userId) => __awaiter(void 0, v
         user: userId,
         isDeleted: false
     });
+    console.log("enrollment", enrollment);
     const completedLessons = ((_a = enrollment === null || enrollment === void 0 ? void 0 : enrollment.completedLessons) === null || _a === void 0 ? void 0 : _a.length) || 0;
     // Get submitted tasks count (excluding quizzes)
     const { TaskSubmission } = yield Promise.resolve().then(() => __importStar(require("../submission/submission.model")));
@@ -180,16 +182,19 @@ const calculateComprehensiveProgress = (courseId, userId) => __awaiter(void 0, v
         course: courseId,
         user: userId,
         type: "task",
-        status: { $in: ["approved", "auto_scored"] }
+        status: { $in: ["approved", "auto_scored", "pending_review"] }
     });
     // Get submitted quizzes count
     const submittedQuizzes = yield TaskSubmission.countDocuments({
         course: courseId,
         user: userId,
         type: "quiz",
-        status: { $in: ["approved", "auto_scored"] }
+        status: { $in: ["approved", "auto_scored", "pending_review"] }
     });
     // Calculate total items and completed items
+    console.log("totalLessons", totalLessons, "completedLessons", completedLessons);
+    console.log("totalTasks", totalTasks, "submittedTasks", submittedTasks);
+    console.log("totalQuizzes", totalQuizzes, "submittedQuizzes", submittedQuizzes);
     const totalItems = totalLessons + totalTasks + totalQuizzes;
     const completedItems = completedLessons + submittedTasks + submittedQuizzes;
     // Calculate progress percentage
@@ -224,6 +229,7 @@ const completeLesson = (courseId, enrollmentId, actor, lessonId) => __awaiter(vo
     if (!wasAlreadyCompleted) {
         enrollment.completedLessons = enrollment.completedLessons || [];
         enrollment.completedLessons.push(lessonId);
+        yield enrollment.save();
         // Award points for completing lesson
         const { GamificationServices } = yield Promise.resolve().then(() => __importStar(require("../gamification/gamification.service")));
         yield GamificationServices.addPoints({
@@ -237,7 +243,6 @@ const completeLesson = (courseId, enrollmentId, actor, lessonId) => __awaiter(vo
     }
     // Calculate comprehensive progress including lessons, tasks, and quizzes
     const progressData = yield calculateComprehensiveProgress(courseId, String(enrollment.user));
-    console.log(progressData);
     enrollment.progress = progressData.progress;
     enrollment.lastActivityAt = new Date();
     yield enrollment.save();

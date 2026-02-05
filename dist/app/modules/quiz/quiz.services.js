@@ -22,6 +22,8 @@ const course_model_1 = require("../course/course.model");
 const task_model_1 = require("../task/task.model");
 const submission_model_1 = require("../submission/submission.model"); // for creating the mixed submission
 const gamification_service_1 = require("../gamification/gamification.service");
+const enrollment_services_1 = require("../enrollment/enrollment.services");
+const enrollment_model_1 = require("../enrollment/enrollment.model");
 /** Normalize legacy answers format (number[][]) to mixed objects */
 function normalizeAnswers(raw, totalQuestions) {
     // If first item looks like legacy array form -> MCQ only
@@ -235,6 +237,14 @@ const submitQuiz = (quizId, userId, answersRaw // supports legacy number[][] or 
     const passed = typeof quiz.passMark === "number"
         ? (correctCount / totalQuestions) * 100 >= quiz.passMark
         : undefined;
+    const progressData = yield enrollment_services_1.EnrollmentServices.calculateComprehensiveProgress(quiz.course, String(userId));
+    console.log(progressData);
+    const enrollment = yield enrollment_model_1.Enrollment.findOne({ course: task.course, user: userId });
+    if (enrollment) {
+        enrollment.progress = progressData.progress;
+        enrollment.lastActivityAt = new Date();
+        yield enrollment.save();
+    }
     return {
         correctCount,
         totalQuestions,
