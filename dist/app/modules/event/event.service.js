@@ -58,6 +58,15 @@ const register = (eventId, userId) => __awaiter(void 0, void 0, void 0, function
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Already registered");
     (_b = event.attendees) === null || _b === void 0 ? void 0 : _b.push(userId);
     yield event.save();
+    if (event.pointsReward > 0) {
+        yield gamification_service_1.GamificationServices.addPoints({
+            userId,
+            points: event.pointsReward,
+            sourceType: "event",
+            eventId: String(event._id),
+            reason: `Attended event: ${event.title.en || "Event"}`
+        });
+    }
     return event;
 });
 const markAttendance = (eventId, userId) => __awaiter(void 0, void 0, void 0, function* () {

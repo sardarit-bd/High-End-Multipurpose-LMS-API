@@ -116,24 +116,27 @@ const updateProgress = async (courseId: string, enrollmentId: string, actor: { u
 const calculateComprehensiveProgress = async (courseId: string, userId: string) => {
   const course = await ensureCourse(courseId);
 
+  const units = await import("../unit/unit.model").then(mod => mod.Unit.find({ course: courseId, isDeleted: false }));
+
   // Get total lessons count
   const { Lesson } = await import("../lesson/lesson.model");
   const totalLessons = await Lesson.countDocuments({
-    unit: { $in: course.units },
+    unit: { $in: units.map(u => u._id) },
     isDeleted: false
   });
+
 
   // Get total tasks count (excluding quizzes since they're handled separately)
   const { Task } = await import("../task/task.model");
   const totalTasks = await Task.countDocuments({
-    unit: { $in: course.units },
+    unit: { $in: units.map(u => u._id) },
     type: { $nin: ["quiz"] },
     isDeleted: false
   });
 
   // Get total quizzes count
   const totalQuizzes = await Task.countDocuments({
-    unit: { $in: course.units },
+    unit: { $in: units.map(u => u._id) },
     type: "quiz",
     isDeleted: false
   });
@@ -145,6 +148,8 @@ const calculateComprehensiveProgress = async (courseId: string, userId: string) 
     isDeleted: false
   });
 
+  console.log("enrollment", enrollment);
+
   const completedLessons = enrollment?.completedLessons?.length || 0;
 
   // Get submitted tasks count (excluding quizzes)
@@ -153,7 +158,7 @@ const calculateComprehensiveProgress = async (courseId: string, userId: string) 
     course: courseId,
     user: userId,
     type: "task",
-    status: { $in: ["approved", "auto_scored"] }
+    status: { $in: ["approved", "auto_scored", "pending_review"] }
   });
 
   // Get submitted quizzes count
@@ -161,10 +166,13 @@ const calculateComprehensiveProgress = async (courseId: string, userId: string) 
     course: courseId,
     user: userId,
     type: "quiz",
-    status: { $in: ["approved", "auto_scored"] }
+    status: { $in: ["approved", "auto_scored", "pending_review"] }
   });
 
   // Calculate total items and completed items
+  console.log("totalLessons", totalLessons, "completedLessons", completedLessons);
+  console.log("totalTasks", totalTasks, "submittedTasks", submittedTasks);
+  console.log("totalQuizzes", totalQuizzes, "submittedQuizzes", submittedQuizzes);
   const totalItems = totalLessons + totalTasks + totalQuizzes;
   const completedItems = completedLessons + submittedTasks + submittedQuizzes;
 
@@ -203,6 +211,7 @@ const completeLesson = async (courseId: string, enrollmentId: string, actor: { u
   if (!wasAlreadyCompleted) {
     enrollment.completedLessons = enrollment.completedLessons || [];
     enrollment.completedLessons.push(lessonId);
+    await enrollment.save();
 
     // Award points for completing lesson
     const { GamificationServices } = await import("../gamification/gamification.service");
@@ -218,7 +227,7 @@ const completeLesson = async (courseId: string, enrollmentId: string, actor: { u
 
   // Calculate comprehensive progress including lessons, tasks, and quizzes
   const progressData = await calculateComprehensiveProgress(courseId, String(enrollment.user));
-  console.log(progressData)
+ 
   enrollment.progress = progressData.progress;
 
   enrollment.lastActivityAt = new Date();

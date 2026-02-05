@@ -66,7 +66,7 @@ if(query.q){
   // ⚡ Fetch items and total count
   const [items, total] = await Promise.all([
     Course.find(filter)
-      .populate("instructor", "name email") // optional
+      .populate("instructor", "name email picture") // optional
       .sort(sort)
       .skip(skip)
       .limit(limit),

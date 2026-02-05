@@ -22,6 +22,8 @@ const unit_model_1 = require("../unit/unit.model");
 const course_model_1 = require("../course/course.model");
 const quiz_model_1 = require("../quiz/quiz.model");
 const gamification_service_1 = require("../gamification/gamification.service");
+const enrollment_model_1 = require("../enrollment/enrollment.model");
+const enrollment_services_1 = require("../enrollment/enrollment.services");
 const createReviewedSubmission = (taskId, userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const task = yield task_model_1.Task.findById(taskId);
@@ -41,6 +43,14 @@ const createReviewedSubmission = (taskId, userId, payload) => __awaiter(void 0, 
         type: "task",
         instructor: (_a = (yield course_model_1.Course.findById(task.course))) === null || _a === void 0 ? void 0 : _a.instructor,
     });
+    const progressData = yield enrollment_services_1.EnrollmentServices.calculateComprehensiveProgress(task.course, String(userId));
+    console.log(progressData);
+    const enrollment = yield enrollment_model_1.Enrollment.findOne({ course: task.course, user: userId });
+    if (enrollment) {
+        enrollment.progress = progressData.progress;
+        enrollment.lastActivityAt = new Date();
+        yield enrollment.save();
+    }
     return sub;
 });
 /**

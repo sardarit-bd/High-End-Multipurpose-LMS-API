@@ -73,7 +73,7 @@ const listCourses = (query) => __awaiter(void 0, void 0, void 0, function* () {
     // ⚡ Fetch items and total count
     const [items, total] = yield Promise.all([
         course_model_1.Course.find(filter)
-            .populate("instructor", "name email") // optional
+            .populate("instructor", "name email picture") // optional
             .sort(sort)
             .skip(skip)
             .limit(limit),

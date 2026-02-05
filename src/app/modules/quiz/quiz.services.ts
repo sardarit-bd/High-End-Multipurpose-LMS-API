@@ -9,6 +9,8 @@ import { SubmissionServices } from "../submission/submission.services"; // may b
 import { TaskSubmission } from "../submission/submission.model"; // for creating the mixed submission
 import { GamificationServices } from "../gamification/gamification.service";
 import { any } from "zod";
+import { EnrollmentServices } from "../enrollment/enrollment.services";
+import { Enrollment } from "../enrollment/enrollment.model";
 
 // ---------- Helpers ----------
 
@@ -198,7 +200,7 @@ const submitQuiz = async (
     : await Task.findOne({ unit: quiz.unit, course: quiz.course, type: "quiz", title: quiz.title });
 
   if (!task) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Linked Task not found for quiz");
-  
+
   const totalQuestions = quiz.questions.length;
   const answers = normalizeAnswers(answersRaw, totalQuestions);
 
@@ -285,6 +287,16 @@ const submitQuiz = async (
       ? (correctCount / totalQuestions) * 100 >= quiz.passMark
       : undefined;
 
+  const progressData = await EnrollmentServices.calculateComprehensiveProgress(quiz.course, String(userId));
+
+
+  console.log(progressData)
+  const enrollment = await Enrollment.findOne({ course: task.course, user: userId });
+  if (enrollment) {
+    enrollment.progress = progressData.progress;
+    enrollment.lastActivityAt = new Date();
+    await enrollment.save();
+  }
   return {
     correctCount,
     totalQuestions,
@@ -326,7 +338,7 @@ const updateQuestionToQuiz = async (
   if (!isOwner && !isAdmin) throw new AppError(httpStatus.FORBIDDEN, "Forbidden");
 
   // Find and update the question
-  const questionIndex = quiz.questions.findIndex((q:any) => String(q._id) === questionId);
+  const questionIndex = quiz.questions.findIndex((q: any) => String(q._id) === questionId);
   if (questionIndex === -1) throw new AppError(httpStatus.NOT_FOUND, "Question Not Found");
 
   // Validate MCQ options
