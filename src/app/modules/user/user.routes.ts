@@ -1,9 +1,10 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import { createUserZodSchema } from "./user.validation";
 import { userController } from "./user.controller";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { Role } from "./user.interface";
 import { checkAuth } from "../../middlewares/checkAuth";
+import { sendEmail } from "../../utils/sendEmail";
 
 
 
@@ -48,4 +49,17 @@ router.post('/create-admin', checkAuth(Role.ADMIN, Role.SUPER_ADMIN), userContro
 
 // Delete admin - SUPER_ADMIN only
 router.delete('/delete-admin/:id', checkAuth(Role.ADMIN, Role.SUPER_ADMIN), userController.deleteAdmin);
+
+router.post("/send-mail", async (req: Request, res: Response) => {
+  const {name, phone, email, subject, message} = req.body
+  await sendEmail(name, phone, email, subject, message);
+  
+  res.status(200).json({
+    message: `Message sent successfully: ${message}`,
+    name,
+    phone,
+    email,
+    subject,  
+  });
+});
 export const UserRoutes = router;
