@@ -250,9 +250,7 @@ const submitQuiz = async (
 
   // Award MCQ points immediately, short answers require review
   let awardedNow = autoPoints; // Award MCQ points immediately
-  if (typeof task.maxPoints === "number") {
-    awardedNow = Math.min(awardedNow, task.maxPoints); // Cap at task max
-  }
+
 
   // Determine status based on question types
   const status = needsReview ? "pending_review" : "auto_scored";

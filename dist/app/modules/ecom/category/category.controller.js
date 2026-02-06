@@ -26,7 +26,6 @@ const listCategories = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Category list", data: result });
 }));
 const updateCategory = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(req.params);
     const result = yield category_services_1.CategoryServices.updateCategory(req.params.id, req.body);
     (0, sendResponse_1.sendResponse)(res, { statusCode: http_status_codes_1.default.OK, success: true, message: "Category updated", data: result });
 }));

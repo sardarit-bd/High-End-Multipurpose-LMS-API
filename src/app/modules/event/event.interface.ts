@@ -4,7 +4,7 @@ import { Types } from "mongoose";
 export interface IEvent {
   _id?: Types.ObjectId;
   title: string;
- thumbnail?: string;
+  thumbnail?: string;
   description?: string;
   eventDate: Date;
   location?: string;

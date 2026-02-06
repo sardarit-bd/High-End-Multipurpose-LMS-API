@@ -33,7 +33,7 @@ const createCheckout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
 }));
 const createDonationCheckout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.user;
-    const { provider, fund, amount } = req.body;
+    const { provider, fund, amount, } = req.body;
     const data = yield order_services_1.OrderServices.createDonationCheckout(fund, token === null || token === void 0 ? void 0 : token.userId, provider, amount);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.CREATED,

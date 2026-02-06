@@ -74,7 +74,6 @@ const forgotPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaite
 const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const decodedToken = req.user;
     const { password, id } = req.body;
-    console.log(decodedToken, id, password);
     yield auth_services_1.AuthServices.resetPassword(decodedToken, id, password);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
