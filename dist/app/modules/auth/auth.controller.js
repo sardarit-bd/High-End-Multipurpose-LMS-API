@@ -34,13 +34,13 @@ const credentialsLogin = (0, catchAsync_1.catchAsync)((req, res, next) => __awai
 const logout = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     res.clearCookie("accessToken", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
     res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
