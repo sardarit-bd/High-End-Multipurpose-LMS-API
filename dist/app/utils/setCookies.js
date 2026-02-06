@@ -6,14 +6,16 @@ const setAuthCookie = (res, tokenInfo) => {
         res.cookie('accessToken', tokenInfo.accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: "lax"
+            sameSite: "none",
+            domain: ".vercel.app"
         });
     }
     if (tokenInfo.refreshToken) {
         res.cookie('refreshToken', tokenInfo.refreshToken, {
             httpOnly: true,
             secure: true,
-            sameSite: "lax"
+            sameSite: "none",
+            domain: ".vercel.app"
         });
     }
 };
