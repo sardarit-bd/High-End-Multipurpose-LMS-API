@@ -11,7 +11,7 @@ export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
             httpOnly: true,
             secure: true,
             sameSite: "none",
-            domain: ".vercel.app"
+            // domain: ".vercel.app"
         })
     }
 
@@ -20,7 +20,7 @@ export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
             httpOnly: true,
             secure: true,
             sameSite: "none",
-            domain: ".vercel.app"
+            // domain: ".vercel.app"
         })
     }
 }
