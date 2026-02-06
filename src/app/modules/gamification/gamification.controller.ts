@@ -18,7 +18,6 @@ const getMyPoints = catchAsync(async (req: Request, res: Response) => {
 
 const getLeaderboard = catchAsync(async (req, res) => {
   const { limit, scope, value, courseId, schoolId, cityId } = req.query;
-  console.log(req.query)
   const data = await GamificationServices.getLeaderboard(
     {
       limit: Number(limit) || 20,

@@ -83,7 +83,7 @@ const markAttendance = catchAsync(async (req: Request, res: Response) => {
 
 const createCheckout = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  console.log("Creating checkout for event:", req.body.eventId, "by user:", token.userId);
+
   const data = await EventServices.createCheckout(req.body.eventId, token.userId);
   sendResponse(res, { statusCode: httpStatus.CREATED, success: true, message: "Checkout created", data });
 });

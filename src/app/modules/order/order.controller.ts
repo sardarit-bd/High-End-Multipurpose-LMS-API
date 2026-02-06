@@ -32,7 +32,7 @@ const createCheckout = catchAsync(async (req: Request, res: Response) => {
 
 const createDonationCheckout = catchAsync(async (req: Request, res: Response) => {
   const token = req.user as JwtPayload;
-  const { provider, fund, amount } = req.body;
+  const { provider, fund, amount,  } = req.body;
 
   const data = await OrderServices.createDonationCheckout(
     fund,

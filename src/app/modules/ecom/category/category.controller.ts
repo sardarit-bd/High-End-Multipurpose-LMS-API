@@ -14,7 +14,6 @@ const listCategories = catchAsync(async (req, res) => {
 });
 
 const updateCategory = catchAsync(async (req, res) => {
-  console.log(req.params)
   const result = await CategoryServices.updateCategory(req.params.id, req.body);
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: "Category updated", data: result });
 });
