@@ -29,7 +29,6 @@ const getMyPoints = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
 }));
 const getLeaderboard = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { limit, scope, value, courseId, schoolId, cityId } = req.query;
-    console.log(req.query);
     const data = yield gamification_service_1.GamificationServices.getLeaderboard({
         limit: Number(limit) || 20,
         scope: scope || "global",
