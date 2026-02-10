@@ -34,6 +34,35 @@ const listPublic = async () => {
   return Event.find({ isDeleted: false }).sort({ startDate: 1 });
 };
 
+const getMyRegisteredEvents = async (userId: string) => {
+  return Event.find({ isDeleted: false, attendees: userId }).sort({ startDate: 1 });
+};
+const getAllRegistrations = async () => {
+  // fetch events with attendees populated
+  const events = await Event.find({
+    isDeleted: false,
+    attendees: { $exists: true, $ne: [] }
+  })
+  .sort({ startDate: 1 })
+  .populate("attendees", "name email picture phone");
+
+  // flatten: each attendee gets its own "event" object
+  const result:any = [];
+
+  events.forEach(event => {
+    event.attendees.forEach((user: any) => {
+      result.push({
+        eventId: event._id,
+        eventTitle: event.title, 
+        startDate: event.startDate,
+        user: user, 
+      });
+    });
+  });
+
+  return result;
+};
+
 const get = async (eventId: string) => {
   const event = await Event.findOne({ _id: eventId, isDeleted: false });
   if (!event) throw new AppError(httpStatus.NOT_FOUND, "Event not found");
@@ -112,5 +141,7 @@ export const EventServices = {
   get,
   register,
   markAttendance,
-  createCheckout
+  getMyRegisteredEvents,
+  createCheckout,
+  getAllRegistrations
 };
