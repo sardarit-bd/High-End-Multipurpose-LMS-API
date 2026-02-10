@@ -49,6 +49,28 @@ const listPublic = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
+const listMyRegisteredEvents = catchAsync(async (req: Request, res: Response) => {
+  const token = req.user as JwtPayload;
+  console.log("User ID from token:", token); // Debug log
+  const events = await EventServices.getMyRegisteredEvents(token.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Events fetched",
+    data: events,
+  });
+});
+
+const getAllRegistrations = catchAsync(async (_req: Request, res: Response) => {
+  const events = await EventServices.getAllRegistrations();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "All event registrations fetched",
+    data: events,
+  });
+});
+
 const get = catchAsync(async (req: Request, res: Response) => {
   const event = await EventServices.get(req.params.eventId);
   sendResponse(res, {
@@ -96,5 +118,7 @@ export const eventController = {
   get,
   register,
   markAttendance,
-  createCheckout
+  createCheckout,
+  listMyRegisteredEvents,
+  getAllRegistrations
 };
