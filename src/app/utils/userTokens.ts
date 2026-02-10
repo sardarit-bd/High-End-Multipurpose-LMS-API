@@ -11,6 +11,7 @@ export const createUserTokens = (user: Partial<IUser>) => {
     userId: user._id,
     email: user.email,
     role: user.role,
+    instructor_status: user.instructorRequest?.status || "none"
   };
   const accessToken = generateToken(
     jwtPayload,

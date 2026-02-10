@@ -4,11 +4,11 @@
   "description": "",
   "main": "./dist/server.js",
   "scripts": {
-    "start": "node ./dist/server.js",
+    "start": "node init && node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "dev": "node init && ts-node-dev --respawn --transpile-only ./src/server.ts",
     "lint": "npx eslint ./src",
-    "build": "tsc"
+    "build": "node init && tsc"
   },
   "keywords": [],
   "author": "",
@@ -39,6 +39,7 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.11.0",
+    "node-fetch": "^3.3.2",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",
