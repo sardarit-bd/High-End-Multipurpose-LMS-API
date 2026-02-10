@@ -7,6 +7,10 @@ const router = Router();
 
 // Public
 router.get("/", eventController.listPublic);
+
+router.get("/my-registrations", checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN), eventController.listMyRegisteredEvents);
+router.get("/all-registrations", checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.STUDENT, Role.INSTRUCTOR), eventController.getAllRegistrations);
+
 router.get("/:eventId", eventController.get);
 
 // Admin / Partner
@@ -35,7 +39,7 @@ router.delete(
 // Student participation
 router.post(
   "/:eventId/register",
-  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN),
+  checkAuth(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
   eventController.register
 );
 

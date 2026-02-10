@@ -39,6 +39,7 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.11.0",
+    "node-fetch": "^3.3.2",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",

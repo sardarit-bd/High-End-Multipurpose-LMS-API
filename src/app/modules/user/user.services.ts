@@ -24,16 +24,18 @@ const createUser = async (payload: Partial<IUser>) => {
     providerId: email as string,
   };
 
+  const instructorRequest = payload.role === Role.INSTRUCTOR ? "pending" : "none"
   const user = await User.create({
     email,
     password: hashPassword,
     auths: [authProvider],
+    instructorRequest : {status: instructorRequest},
     ...rest,
   });
 
   if (user.role === Role.INSTRUCTOR) {
     const inst = await Instructor.create({
-      userId: user._id
+      userId: user._id,
     })
   }
 
